@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Security.Cryptography.Xml;
-using System.Xml.Serialization;
 using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
-using Microsoft.VisualBasic;
 
 namespace MultiDimensionalOptimization.algo
 {

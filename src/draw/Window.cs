@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-// using System.Windows.Forms;
-using System.Drawing;
-using System.Security.Cryptography.Xml;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using MultiDimensionalOptimization.algo;
 
 namespace MultiDimensionalOptimization.draw
@@ -28,7 +24,7 @@ namespace MultiDimensionalOptimization.draw
         {
             _refresh = refresh;
             _gridPen = new Pen(Color.LightGray);
-            _vectorsPen = new Pen(Color.Black);
+            _vectorsPen = new Pen(Color.Black, 1) {EndCap = LineCap.ArrowAnchor};
 
             Update();
         }
@@ -92,9 +88,11 @@ namespace MultiDimensionalOptimization.draw
             }
         }
 
+        private const int LinesCount = 35;
+
         public void Paint(object sender, PaintEventArgs e)
         {
-            DrawGrid(e.Graphics, 35);
+            DrawGrid(e.Graphics, LinesCount);
             e.Graphics.DrawImage(_bitmap, 0, 0);
             for (var i = 0; i < _vectors.Count - 1; i++)
             {
