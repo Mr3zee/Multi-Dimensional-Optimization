@@ -7,7 +7,7 @@ namespace MultiDimensionalOptimization.algo
 {
     public static class AdvancedMath
     {
-        private static readonly Random random = new Random(); 
+        private static readonly Random Random = new(); 
         public static double Norm(double[] v)
         {
             return Math.Sqrt(Enumerable.Range(0, v.Length).Aggregate(0.0d, 
@@ -40,7 +40,7 @@ namespace MultiDimensionalOptimization.algo
             var m = Enumerable.Repeat(0.0, n * n).ToArray();
             for (var i = 0; i < n; i++)
             {
-                m[i * (n + 1)] = random.Next(1, k);
+                m[i * (n + 1)] = Random.Next(1, k);
             }
             m[0] = 1;
             m[n * n - 1] = k;
@@ -60,7 +60,7 @@ namespace MultiDimensionalOptimization.algo
             var retval = new double[n];
             for (var i = 0; i < n; i++)
             {
-                retval[i] = random.NextDouble() * (UpperRandomBound - LowerRandomBound) + LowerRandomBound;
+                retval[i] = Random.NextDouble() * (UpperRandomBound - LowerRandomBound) + LowerRandomBound;
             }
 
             return retval;
