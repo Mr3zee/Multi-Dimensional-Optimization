@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Globalization;
 using MultiDimensionalOptimization.algo;
+using static System.Double;
 
 namespace MultiDimensionalOptimization.draw
 {
@@ -13,20 +15,79 @@ namespace MultiDimensionalOptimization.draw
         public const int Height = 720;
         private const double Ratio = (double) Height / Width;
         private readonly Action _refresh;
+        private readonly Control.ControlCollection _controls;
         private Bitmap _bitmap;
         private List<double[]> _vectors;
         private readonly Pen _gridPen;
+        private double[][] _grid;
+        private bool _updateGrid;
         private readonly Pen _vectorsPen;
         private readonly Color _minimalGradientColor = Color.Aqua;
         private readonly Color _maximalGradientColor = Color.Coral;
+        private readonly Dictionary<string, double> _parameters; 
 
-        public Window(Action refresh)
+        public Window(Action refresh, Control.ControlCollection controls)
         {
+            _updateGrid = true;
             _refresh = refresh;
+            _controls = controls;
             _gridPen = new Pen(Color.LightGray);
             _vectorsPen = new Pen(Color.Black, 1) {EndCap = LineCap.ArrowAnchor};
-
+            _parameters = new Dictionary<string, double>();
+            
+            AddTextBox("a11", 2, 10);
+            AddTextBox("a12", 0, 40);
+            AddTextBox("a21", 0, 70);
+            AddTextBox("a22", 1, 100);
+            
+            AddTextBox("b1", 0, 130);
+            AddTextBox("b2", 0, 160);
+            
+            AddTextBox("c", 0, 190);
+            
+            AddTextBox("r", 30, 250);
+            AddTextBox("epsilon", 0.00001, 280);
+            
+            AddTextBox("s1", 10, 340);
+            AddTextBox("s2", 10, 370);
+            
             Update();
+        }
+
+        private void AddTextBox(string name, double value, int offsetY)
+        {
+            var textBox = new TextBox
+            {
+                Multiline = false,
+                AcceptsReturn = false,
+                PlaceholderText = name,
+                AcceptsTab = false,
+                Text = value.ToString(CultureInfo.InvariantCulture),
+                Top = offsetY,
+                Left = 10,
+                Height = 20,
+                Anchor = AnchorStyles.Left & AnchorStyles.Top,
+                
+            };
+
+            textBox.LostFocus += (sender, e) =>
+            {
+                var oldV = _parameters[textBox.PlaceholderText];
+                TryParse(textBox.Text, out var newV);
+                if (Math.Abs(oldV - newV) > newV * 0.0001)
+                {
+                    _parameters[textBox.PlaceholderText] = newV;
+                    if (name == "r")
+                    {
+                        _updateGrid = true;
+                    }
+                    Update();
+                    _refresh.Invoke();   
+                }
+            };
+
+            _controls.Add(textBox);
+            _parameters.Add(name, value);
         }
 
         private void Update()
@@ -35,15 +96,31 @@ namespace MultiDimensionalOptimization.draw
             var algorithm = GetAlgorithm();
             var epsilon = GetEpsilon();
             var radius = GetRadius();
+            var startVector = GetStartVector();
 
-            var result = algorithm.Invoke(f, AdvancedMath.GenerateRandomStartVector(f.N), epsilon);
+            var result = algorithm.Invoke(f, startVector, epsilon);
             
             CreateFunctionContoursBitmap(f, result.Levels, result.X[0], result.X[1], radius);
         }
 
         private Function GetFunction()
         {
-            return new(2, new double[] {2, 0, 0, 1}, new double[] {0, 0}, 0);
+            return new(2, new []
+            {
+                GetParameter("a11"), GetParameter("a12"),
+                GetParameter("a21"), GetParameter("a22")
+            }, new [] {GetParameter("b1"), GetParameter("b2")}, GetParameter("c"));
+        }
+
+        private double[] GetStartVector()
+        {
+            return new[] { GetParameter("s1"), GetParameter("s2") };
+        }
+
+        private double GetParameter(string name)
+        {
+            // TODO check
+            return _parameters[name];
         }
 
         private Algorithm GetAlgorithm()
@@ -53,12 +130,12 @@ namespace MultiDimensionalOptimization.draw
 
         private double GetEpsilon()
         {
-            return 0.00001;
+            return GetParameter("epsilon");
         }
 
         private double GetRadius()
         {
-            return 30;
+            return GetParameter("r");
         }
 
         private void CreateFunctionContoursBitmap(Function f, List<double[]> values, double x, double y, double r)
@@ -69,12 +146,17 @@ namespace MultiDimensionalOptimization.draw
             var minY = y - r * Ratio;
             var maxY = y + r * Ratio;
 
-            var grid = GenerateGrid(f, minX, maxX, minY, maxY);
+            if (_updateGrid)
+            {
+                _grid = GenerateGrid(f, minX, maxX, minY, maxY);
+                _updateGrid = false;
+            }
+
             _bitmap = new Bitmap(Width, Height);
 
             for (var i = 0; i < values.Count; i++)
             {
-                GenerateBitmap(f.Apply(values[i]), grid, gradientColors[i], _bitmap);
+                GenerateBitmap(f.Apply(values[i]), _grid, gradientColors[i], _bitmap);
             }
             
             _vectors = new List<double[]>();

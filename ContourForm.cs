@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 using MultiDimensionalOptimization.draw;
 
 namespace MultiDimensionalOptimization
@@ -16,9 +8,9 @@ namespace MultiDimensionalOptimization
         public ContourForm()
         {
             InitializeComponent();
-            var window = new Window(Refresh);
             Width = Window.Width;
             Height = Window.Height;
+            var window = new Window(Refresh, Controls);
             Paint += window.Paint;
 
             // Define the border style of the form to a dialog box.
@@ -33,7 +25,6 @@ namespace MultiDimensionalOptimization
             // Set the start position of the form to the center of the screen.
             StartPosition = FormStartPosition.CenterScreen;
 
-            Text = "MultiDimensional Optimization";
         }
     }
 }
