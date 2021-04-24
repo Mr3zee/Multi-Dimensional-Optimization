@@ -1,5 +1,5 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultyDimentionalOptimization", "MultyDimentionalOptimization.csproj", "{A8F2FCE7-E45A-49BC-BFBF-FD4F7270D04F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiDimentionalOptimization", "MultiDimentionalOptimization.csproj", "{A8F2FCE7-E45A-49BC-BFBF-FD4F7270D04F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace MultyDimentionalOptimization
+namespace MultiDimentionalOptimization
 {
     static class Program
     {

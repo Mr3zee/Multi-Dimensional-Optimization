@@ -7,9 +7,9 @@ using System.Drawing;
 using System.Security.Cryptography.Xml;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MultyDimentionalOptimization.algo;
+using MultiDimentionalOptimization.algo;
 
-namespace MultyDimentionalOptimization.draw
+namespace MultiDimentionalOptimization.draw
 {
     public class Window
     {
@@ -19,24 +19,57 @@ namespace MultyDimentionalOptimization.draw
         private readonly Action refresh;
         private Bitmap bitmap;
         private readonly Pen GridPen;
+        private readonly Color MinimalGradientColor = Color.Aqua;
+        private readonly Color MaximalGradientColor = Color.Coral;
 
         public Window(Action refresh)
         {
             this.refresh = refresh;
             GridPen = new Pen(Color.LightGray);
 
-            var f = AdvancedMath.CreateDiagonalFunction(2, 1);
-            var values = new double[] {1, 2, 3, 4, 5, 6, 7, 8, 9};
-            CreateFunctionContoursBitmap(f, values,0, 0, 10);
+            // var f = AdvancedMath.CreateDiagonalFunction(2, 4);
+            Update();
+        }
+
+        private void Update()
+        {
+            var f = GetFunction();
+            var algorithm = GetAlgorithm();
+            var epsilon = GetEpsilon();
+            var radius = GetRadius();
+
+            var result = algorithm.Invoke(f, AdvancedMath.GenerateRandomStartVector(f.N), epsilon);
+            var values = new double[] {1, 2, 3, 4, 5, 6, 7};
+            CreateFunctionContoursBitmap(f, values,0, 0, radius);
+        }
+
+        private Function GetFunction()
+        {
+            return new(2, new double[] {1, 0, 0, 0}, new double[] {0, 1}, 0);
+        }
+
+        private Algorithm GetAlgorithm()
+        {
+            return Optimization.FASTEST_DESCENT;
+        }
+
+        private double GetEpsilon()
+        {
+            return 0.00001;
+        }
+
+        private double GetRadius()
+        {
+            return 30;
         }
 
         private void CreateFunctionContoursBitmap(Function f, double[] values, double x, double y, double r)
         {
-            var gradientColors = GetColorsGradient(Color.Coral, Color.Aqua, values.Length);
+            var gradientColors = GetColorsGradient(MaximalGradientColor, MinimalGradientColor, values.Length);
             var grid = GenerateGrid(f, x - r, x + r, y - r * RATIO, y + r * RATIO);
             bitmap = new Bitmap(WIDTH, HEIGHT);
 
-            for (int i = 0; i < values.Length; i++)
+            for (var i = 0; i < values.Length; i++)
             {
                 GenerateBitmap(values[i], grid, gradientColors[i], bitmap);
             }

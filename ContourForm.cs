@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MultyDimentionalOptimization.draw;
+using MultiDimentionalOptimization.draw;
 
-namespace MultyDimentionalOptimization
+namespace MultiDimentionalOptimization
 {
     public partial class ContourForm : Form
     {

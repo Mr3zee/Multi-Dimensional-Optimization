@@ -1,7 +1,7 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
-namespace MultyDimentionalOptimization.algo
+namespace MultiDimentionalOptimization.algo
 {
     public class Function
     {

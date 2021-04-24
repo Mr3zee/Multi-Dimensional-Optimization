@@ -8,7 +8,7 @@ using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using Microsoft.VisualBasic;
 
-namespace MultyDimentionalOptimization.algo
+namespace MultiDimentionalOptimization.algo
 {
     public class Result
     {
