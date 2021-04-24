@@ -33,7 +33,7 @@ namespace MultiDimensionalOptimization
             // Set the start position of the form to the center of the screen.
             StartPosition = FormStartPosition.CenterScreen;
 
-            Text = "MultiDimentional Optimization";
+            Text = "MultiDimensional Optimization";
         }
     }
 }
