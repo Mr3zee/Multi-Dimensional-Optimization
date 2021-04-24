@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MultiDimentionalOptimization.draw;
+using MultiDimensionalOptimization.draw;
 
-namespace MultiDimentionalOptimization
+namespace MultiDimensionalOptimization
 {
     public partial class ContourForm : Form
     {
@@ -17,8 +17,8 @@ namespace MultiDimentionalOptimization
         {
             InitializeComponent();
             var window = new Window(Refresh);
-            Width = Window.WIDTH;
-            Height = Window.HEIGHT;
+            Width = Window.Width;
+            Height = Window.Height;
             Paint += window.Paint;
 
             // Define the border style of the form to a dialog box.

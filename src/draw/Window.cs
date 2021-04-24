@@ -7,25 +7,25 @@ using System.Drawing;
 using System.Security.Cryptography.Xml;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MultiDimentionalOptimization.algo;
+using MultiDimensionalOptimization.algo;
 
-namespace MultiDimentionalOptimization.draw
+namespace MultiDimensionalOptimization.draw
 {
     public class Window
     {
-        public const int WIDTH = 1280;
-        public const int HEIGHT = 720;
-        private const double RATIO = (double) HEIGHT / WIDTH;
-        private readonly Action refresh;
-        private Bitmap bitmap;
-        private readonly Pen GridPen;
-        private readonly Color MinimalGradientColor = Color.Aqua;
-        private readonly Color MaximalGradientColor = Color.Coral;
+        public const int Width = 1280;
+        public const int Height = 720;
+        private const double Ratio = (double) Height / Width;
+        private readonly Action _refresh;
+        private Bitmap _bitmap;
+        private readonly Pen _gridPen;
+        private readonly Color _minimalGradientColor = Color.Aqua;
+        private readonly Color _maximalGradientColor = Color.Coral;
 
         public Window(Action refresh)
         {
-            this.refresh = refresh;
-            GridPen = new Pen(Color.LightGray);
+            _refresh = refresh;
+            _gridPen = new Pen(Color.LightGray);
 
             // var f = AdvancedMath.CreateDiagonalFunction(2, 4);
             Update();
@@ -65,34 +65,34 @@ namespace MultiDimentionalOptimization.draw
 
         private void CreateFunctionContoursBitmap(Function f, double[] values, double x, double y, double r)
         {
-            var gradientColors = GetColorsGradient(MaximalGradientColor, MinimalGradientColor, values.Length);
-            var grid = GenerateGrid(f, x - r, x + r, y - r * RATIO, y + r * RATIO);
-            bitmap = new Bitmap(WIDTH, HEIGHT);
+            var gradientColors = GetColorsGradient(_maximalGradientColor, _minimalGradientColor, values.Length);
+            var grid = GenerateGrid(f, x - r, x + r, y - r * Ratio, y + r * Ratio);
+            _bitmap = new Bitmap(Width, Height);
 
             for (var i = 0; i < values.Length; i++)
             {
-                GenerateBitmap(values[i], grid, gradientColors[i], bitmap);
+                GenerateBitmap(values[i], grid, gradientColors[i], _bitmap);
             }
         }
 
         public void Paint(object sender, PaintEventArgs e)
         {
             DrawGrid(e.Graphics, 35);
-            e.Graphics.DrawImage(bitmap, 0, 0);
+            e.Graphics.DrawImage(_bitmap, 0, 0);
         }
 
         private void DrawGrid(Graphics g, int count)
         {
-            int centerX = WIDTH / 2;
-            int centerY = HEIGHT / 2;
-            int delta = WIDTH / count;
+            int centerX = Width / 2;
+            int centerY = Height / 2;
+            int delta = Width / count;
 
             for (int i = 0; i < (count + 1) / 2; i++)
             {
-                g.DrawLine(GridPen, centerX - i * delta, 0, centerX - i * delta, HEIGHT);
-                g.DrawLine(GridPen, centerX + i * delta, 0, centerX + i * delta, HEIGHT);
-                g.DrawLine(GridPen, 0, centerY - i * delta, WIDTH, centerY - i * delta);
-                g.DrawLine(GridPen, 0, centerY + i * delta, WIDTH, centerY + i * delta);
+                g.DrawLine(_gridPen, centerX - i * delta, 0, centerX - i * delta, Height);
+                g.DrawLine(_gridPen, centerX + i * delta, 0, centerX + i * delta, Height);
+                g.DrawLine(_gridPen, 0, centerY - i * delta, Width, centerY - i * delta);
+                g.DrawLine(_gridPen, 0, centerY + i * delta, Width, centerY + i * delta);
             }
         }
 
@@ -101,9 +101,9 @@ namespace MultiDimentionalOptimization.draw
         private static void GenerateBitmap(double value, double[][] grid, Color color, Bitmap bitmap)
         {
             var epsilon = value * PRESICION;
-            for (int i = 0; i < WIDTH; i++)
+            for (int i = 0; i < Width; i++)
             {
-                for (int j = 0; j < HEIGHT; j++)
+                for (int j = 0; j < Height; j++)
                 {
                     if (Math.Abs(grid[i][j] - value) <= epsilon)
                     {
@@ -121,14 +121,14 @@ namespace MultiDimentionalOptimization.draw
             double maxY
         )
         {
-            var grid = new double[WIDTH][];
-            double stepX = (maxX - minX) / WIDTH;
-            double stepY = (maxY - minY) / HEIGHT;
+            var grid = new double[Width][];
+            double stepX = (maxX - minX) / Width;
+            double stepY = (maxY - minY) / Height;
             var vector = new double[2];
-            for (int i = 0; i < WIDTH; i++)
+            for (int i = 0; i < Width; i++)
             {
-                grid[i] = new double[HEIGHT];
-                for (int j = 0; j < HEIGHT; j++)
+                grid[i] = new double[Height];
+                for (int j = 0; j < Height; j++)
                 {
                     vector[0] = minX + i * stepX;
                     vector[1] = minY + j * stepY;

@@ -1,4 +1,4 @@
-﻿namespace MultiDimentionalOptimization
+﻿namespace MultiDimensionalOptimization
 {
     partial class ContourForm
     {

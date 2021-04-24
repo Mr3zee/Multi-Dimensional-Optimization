@@ -8,13 +8,13 @@ using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using Microsoft.VisualBasic;
 
-namespace MultiDimentionalOptimization.algo
+namespace MultiDimensionalOptimization.algo
 {
     public class Result
     {
         private double[] x;
         private double y;
-        private readonly List<double[]> levels;
+        private readonly List<double[]> levels = new();
 
         public double[] X
         {
