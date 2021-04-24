@@ -61,7 +61,7 @@ namespace MultyDimentionalOptimization.algo
             };
         }
 
-        public Algorithm GRADIENT_DESCENT = UnwrapAlgorithm((f, x, epsilon, result) =>
+        public static readonly Algorithm GRADIENT_DESCENT = UnwrapAlgorithm((f, x, epsilon, result) =>
         {
             var itr = 0;
             
@@ -90,7 +90,7 @@ namespace MultyDimentionalOptimization.algo
             return x;
         });
 
-        public Algorithm FASTEST_DESCENT = UnwrapAlgorithm((f, x, epsilon, result) =>
+        public static readonly Algorithm FASTEST_DESCENT = UnwrapAlgorithm((f, x, epsilon, result) =>
         {
             var itr = 0;
             var maxEigenValue = GetMaxEigenValue(f);
@@ -115,7 +115,7 @@ namespace MultyDimentionalOptimization.algo
             return x;
         });
 
-        public Algorithm CONJUGATE_GRADIENT = UnwrapAlgorithm((f, x, epsilon, result) =>
+        public static readonly Algorithm CONJUGATE_GRADIENT = UnwrapAlgorithm((f, x, epsilon, result) =>
         {
             var grad = f.Gradient(x);
             double norm = AdvancedMath.Norm(AdvancedMath.ToArray(grad));
