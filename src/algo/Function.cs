@@ -6,6 +6,8 @@ namespace MultyDimentionalOptimization.algo
     public class Function
     {
         private readonly int _n;
+        public int N => _n;
+        
         private readonly Matrix<double> _a;
         public Matrix<double> A { get; }
 

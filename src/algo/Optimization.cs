@@ -1,33 +1,79 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Security.Cryptography.Xml;
+using System.Xml.Serialization;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using Microsoft.VisualBasic;
 
 namespace MultyDimentionalOptimization.algo
 {
+    public class Result
+    {
+        private double[] x;
+        private double y;
+        private readonly List<double[]> levels;
+
+        public double[] X
+        {
+            get => x;
+            set => x = value;
+        }
+
+        public double Y
+        {
+            get => y;
+            set => y = value;
+        }
+
+        public List<double[]> Levels => levels;
+
+        public void AddLevel(double[] level)
+        {
+            levels.Add(level);
+        }
+    }
+
+    public delegate Result Algorithm(Function f, double[] xArray, double epsilon);
+    
     /**
      * double diagonal elements and normal other
      */
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class Optimization
     {
         private const double MAX_ITR = 10000;
 
-        public static double GRADIENT_DESCENT(Function f, double[] xArray, double epsilon)
+        private delegate Matrix<double> InnerAlgo(Function f, Matrix<double> x,  double epsilon, Result result);
+
+        private static Algorithm UnwrapAlgorithm(InnerAlgo algo)
+        {
+            return (f, xArray, epsilon) =>
+            {
+                int n = xArray.Length;
+                var result = new Result();
+                var x = algo.Invoke(f, AdvancedMath.ToVector(n, xArray), epsilon, result);
+                result.X = AdvancedMath.ToArray(x);
+                result.Y = f.Apply(x);
+                return result;
+            };
+        }
+
+        public Algorithm GRADIENT_DESCENT = UnwrapAlgorithm((f, x, epsilon, result) =>
         {
             var itr = 0;
-            var n = xArray.Length;
-            alglib.smatrixevd(f.GetMatrix(), n, 0, true, out var eigenValues, out _);
+            
+            double alpha = 2 / GetMaxEigenValue(f);
 
-            double alpha = 2 / eigenValues.Max();
-
-            var x = AdvancedMath.ToVector(n, xArray);
             var fx = f.Apply(x);
             Matrix<double> grad;
             while (AdvancedMath.Norm(AdvancedMath.ToArray(grad = f.Gradient(x))) > epsilon && itr < MAX_ITR)
             {
+                result.AddLevel(AdvancedMath.ToArray(x));
                 itr++;
-                logItr(itr);
+                LogItr(itr);
                 var y = x.Subtract(grad.Multiply(alpha));
                 var fy = f.Apply(y);
                 if (fy < fx)
@@ -41,62 +87,45 @@ namespace MultyDimentionalOptimization.algo
                 }
             }
 
-            Console.Out.WriteLine("\n" + x);
-            Console.Out.WriteLine("itr: " + itr);
-            // TODO return x
-            return fx;
-        }
+            return x;
+        });
 
-        private static int _lastSize = 0;
-
-        private static void logItr(int itr)
-        {
-            Console.Out.Write(new string('\b', _lastSize));
-            Console.Out.Write(itr);
-            _lastSize = itr.ToString().Length;
-        }
-
-        public static double FASTEST_DESCENT(Function f, double[] xArray, double epsilon)
+        public Algorithm FASTEST_DESCENT = UnwrapAlgorithm((f, x, epsilon, result) =>
         {
             var itr = 0;
-            var n = xArray.Length;
-            alglib.smatrixevd(f.GetMatrix(), n, 0, true, out var eigenValues, out _);
+            var maxEigenValue = GetMaxEigenValue(f);
 
-            var x = AdvancedMath.ToVector(n, xArray);
             Matrix<double> grad;
             while (AdvancedMath.Norm(AdvancedMath.ToArray(grad = f.Gradient(x))) > epsilon && itr < MAX_ITR)
             {
+                result.AddLevel(AdvancedMath.ToArray(x));
                 itr++;
-                logItr(itr);
+                LogItr(itr);
                 // TODO what is love?
                 var alpha = OneDimensionalOptimization.GOLDEN_SECTION(
                     arg => f.Apply(x.Subtract(grad.Multiply(arg))),
                     0,
-                    2 / eigenValues.Max(),
+                    2 / maxEigenValue,
                     epsilon
                 );
 
                 x = x.Subtract(grad.Multiply(alpha));
             }
+            
+            return x;
+        });
 
-            Console.Out.WriteLine("\n" + x);
-            Console.Out.WriteLine("itr: " + itr);
-            // TODO return x
-            return f.Apply(x);
-        }
-
-        public static double CONJUGATE_GRADIENT(Function f, double[] xArray, double epsilon)
+        public Algorithm CONJUGATE_GRADIENT = UnwrapAlgorithm((f, x, epsilon, result) =>
         {
-            var n = xArray.Length;
-            var x = AdvancedMath.ToVector(n, xArray);
             var grad = f.Gradient(x);
             double norm = AdvancedMath.Norm(AdvancedMath.ToArray(grad));
             var p = grad.Multiply(-1);
             var itr = 0;
             while (norm > epsilon && itr < MAX_ITR)
             {
+                result.AddLevel(AdvancedMath.ToArray(x));
                 itr++;
-                logItr(itr);
+                LogItr(itr);
                 var mult = f.A.Multiply(p);
                 var alpha = norm * norm / AdvancedMath.Scalar(mult, p);
                 x = x.Add(p.Multiply(alpha));
@@ -107,9 +136,13 @@ namespace MultyDimentionalOptimization.algo
                 p = grad.Multiply(-1).Add(p.Multiply(beta));
             }
 
-            Console.Out.WriteLine("\n" + x);
-            Console.Out.WriteLine("itr: " + itr);
-            return f.Apply(x);
+            return x;
+        });
+
+        private static double GetMaxEigenValue(Function f)
+        {
+            alglib.smatrixevd(f.GetMatrix(), f.N, 0, true, out var eigenValues, out _);
+            return eigenValues.Max();
         }
 
         private static class OneDimensionalOptimization
@@ -175,6 +208,19 @@ namespace MultyDimentionalOptimization.algo
             {
                 return (a - b) / 2 + b;
             }
+        }
+        
+        private static int _lastSize = 0;
+
+        public static bool needToLog = false;
+
+        private static void LogItr(int itr)
+        {
+            if (!needToLog) return;
+            
+            Console.Out.Write(new string('\b', _lastSize));
+            Console.Out.Write(itr);
+            _lastSize = itr.ToString().Length;
         }
     }
 }
