@@ -25,6 +25,8 @@ namespace MultiDimensionalOptimization.draw
         private readonly Color _minimalGradientColor = Color.Aqua;
         private readonly Color _maximalGradientColor = Color.Coral;
         private readonly Dictionary<string, double> _parameters; 
+        private readonly Dictionary<string, Algorithm> _algorithms;
+        private Algorithm _algorithm;
 
         public Window(Action refresh, Control.ControlCollection controls)
         {
@@ -34,24 +36,45 @@ namespace MultiDimensionalOptimization.draw
             _gridPen = new Pen(Color.LightGray);
             _vectorsPen = new Pen(Color.Black, 1) {EndCap = LineCap.ArrowAnchor};
             _parameters = new Dictionary<string, double>();
+            _algorithms = new Dictionary<string, Algorithm>();
             
+            CreateParametersInputs();
+            CreateAlgoGroup();
+
+            Update();
+        }
+
+        private void CreateParametersInputs()
+        {
             AddTextBox("a11", 2, 10, true);
             AddTextBox("a12", 0, 40, true);
             AddTextBox("a21", 0, 70, true);
             AddTextBox("a22", 1, 100, true);
-            
+
             AddTextBox("b1", 0, 130, true);
             AddTextBox("b2", 0, 160, true);
-            
+
             AddTextBox("c", 0, 190, true);
-            
+
             AddTextBox("r", 30, 250, true);
             AddTextBox("epsilon", 0.00001, 280, false);
-            
+
             AddTextBox("s1", 10, 340, false);
             AddTextBox("s2", 10, 370, false);
-            
-            Update();
+        }
+
+        private void CreateAlgoGroup()
+        {
+            var algoGroup = new GroupBox()
+            {
+                Name = "Algorithms",
+                Left = 5,
+                Top = 400,
+            };
+            AddAlgoButton("Gradient Descent", true, Optimization.GRADIENT_DESCENT, algoGroup, 10);
+            AddAlgoButton("Fastest Descent", false, Optimization.FASTEST_DESCENT, algoGroup, 40);
+            AddAlgoButton("Conjugate Gradient", false, Optimization.CONJUGATE_GRADIENT, algoGroup, 70);
+            _controls.Add(algoGroup);
         }
 
         private void AddTextBox(string name, double value, int offsetY, bool updateGrid)
@@ -81,13 +104,44 @@ namespace MultiDimensionalOptimization.draw
                     {
                         _updateGrid = true;
                     }
-                    Update();
-                    _refresh.Invoke();   
+                    Reload();
                 }
             };
 
             _controls.Add(textBox);
             _parameters.Add(name, value);
+        }
+
+        private void Reload()
+        {
+            Update();
+            _refresh.Invoke();
+        }
+
+        private void AddAlgoButton(string name, bool isChecked, Algorithm algorithm, GroupBox groupBox, int offset)
+        {
+            var button = new RadioButton()
+            {
+                Text = name,
+                Checked = isChecked,
+                Top = offset,
+                Left = 5
+            };
+            button.Width = (TextRenderer.MeasureText(button.Text, button.Font)).Width + 20;
+            if (isChecked)
+            {
+                _algorithm = algorithm;
+            }
+            button.CheckedChanged += (sender, args) =>
+            {
+                if (button.Checked)
+                {
+                    _algorithm = _algorithms[button.Text];
+                    Reload();
+                }
+            };
+            _algorithms[name] = algorithm;
+            groupBox.Controls.Add(button);
         }
 
         private void Update()
@@ -125,7 +179,7 @@ namespace MultiDimensionalOptimization.draw
 
         private Algorithm GetAlgorithm()
         {
-            return Optimization.GRADIENT_DESCENT;
+            return _algorithm;
         }
 
         private double GetEpsilon()
