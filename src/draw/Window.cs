@@ -18,16 +18,17 @@ namespace MultiDimensionalOptimization.draw
         private readonly Action _refresh;
         private readonly Control.ControlCollection _controls;
         private Bitmap _bitmap;
-        private List<double[]> _vectors;
-        private readonly Pen _gridPen;
+        private List<int[]> _vectors;
+        private readonly Pen _gridPen = new (Color.LightGray);
+        private readonly Pen _boldGridPen = new (Color.Gray, 1);
         private double[][] _grid;
         private bool _updateGrid;
-        private readonly Pen _vectorsPen;
+        private readonly Pen _vectorsPen = new (Color.Black, 1) {EndCap = LineCap.ArrowAnchor};
         private readonly Color _minimalGradientColor = Color.Aqua;
         private readonly Color _maximalGradientColor = Color.Coral;
-        private readonly Dictionary<string, double> _parameters; 
-        private readonly Dictionary<string, TextBox> _results; 
-        private readonly Dictionary<string, Algorithm> _algorithms;
+        private readonly Dictionary<string, double> _parameters = new ();
+        private readonly Dictionary<string, TextBox> _results = new (); 
+        private readonly Dictionary<string, Algorithm> _algorithms = new ();
         private Algorithm _currentAlgorithm;
 
         private const string A11 = "a11";
@@ -52,11 +53,6 @@ namespace MultiDimensionalOptimization.draw
             _updateGrid = true;
             _refresh = refresh;
             _controls = controls;
-            _gridPen = new Pen(Color.LightGray);
-            _vectorsPen = new Pen(Color.Black, 1) {EndCap = LineCap.ArrowAnchor};
-            _parameters = new Dictionary<string, double>();
-            _algorithms = new Dictionary<string, Algorithm>();
-            _results = new Dictionary<string, TextBox>();
             
             CreateParametersInputs();
             CreateAlgoGroup();
@@ -310,14 +306,17 @@ namespace MultiDimensionalOptimization.draw
                 GenerateBitmap(f.Apply(values[i]), _grid, gradientColors[i], _bitmap);
             }
             
-            _vectors = new List<double[]>();
+            _vectors = new List<int[]>();
             values.Add(new [] {x, y});
             
             foreach (var value in values)
             {
                 var windowX = (value[0] - minX) / (2 * r) * ScreenWidth;
                 var windowY = (value[1] - minY) / (2 * r * Ratio) * ScreenHeight;
-                _vectors.Add(new [] { windowX, windowY });
+                
+                if (!InWindow(windowX) || !InWindow(windowY)) continue;
+                
+                _vectors.Add(new [] { (int) windowX, (int) windowY });
             }
         }
 
@@ -329,14 +328,17 @@ namespace MultiDimensionalOptimization.draw
             e.Graphics.DrawImage(_bitmap, 0, 0);
             for (var i = 0; i < _vectors.Count - 1; i++)
             {
-                e.Graphics.DrawLine(
-                    _vectorsPen, 
-                    (float) _vectors[i][0],
-                    (float) _vectors[i][1],
-                    (float) _vectors[i + 1][0],
-                    (float) _vectors[i + 1][1]
-                );
+                var x1 = _vectors[i][0];
+                var y1 = _vectors[i][1];
+                var x2 = _vectors[i + 1][0];
+                var y2 = _vectors[i + 1][1];
+                e.Graphics.DrawLine(_vectorsPen, x1, y1, x2, y2);
             }
+        }
+
+        private static bool InWindow(double value)
+        {
+            return Math.Abs(value) <= 2 * ScreenWidth;
         }
 
         private void DrawGrid(Graphics g, int count)
@@ -345,13 +347,16 @@ namespace MultiDimensionalOptimization.draw
             const int centerY = ScreenHeight / 2;
             var delta = ScreenWidth / count;
 
-            for (var i = 0; i < (count + 1) / 2; i++)
+            for (var i = 1; i < (count + 1) / 2; i++)
             {
                 g.DrawLine(_gridPen, centerX - i * delta, 0, centerX - i * delta, ScreenHeight);
                 g.DrawLine(_gridPen, centerX + i * delta, 0, centerX + i * delta, ScreenHeight);
                 g.DrawLine(_gridPen, 0, centerY - i * delta, ScreenWidth, centerY - i * delta);
                 g.DrawLine(_gridPen, 0, centerY + i * delta, ScreenWidth, centerY + i * delta);
             }
+            
+            g.DrawLine(_boldGridPen, centerX, 0, centerX , ScreenHeight);
+            g.DrawLine(_boldGridPen, 0, centerY, ScreenWidth, centerY);
         }
 
         private const double Precision = 0.02;
