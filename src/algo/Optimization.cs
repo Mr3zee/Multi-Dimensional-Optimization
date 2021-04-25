@@ -161,7 +161,7 @@ namespace MultiDimensionalOptimization.algo
 
         public static class OneDimensionalOptimization
         {
-            private static bool checkBounds(double left, double right, double epsilon) {
+            private static bool CheckBounds(double left, double right, double epsilon) {
                 return Math.Abs(left - right) >= epsilon;
             }
             
@@ -215,7 +215,7 @@ namespace MultiDimensionalOptimization.algo
                     {
                         left = x;
                     }
-                } while (checkBounds(left, right, epsilon));
+                } while (CheckBounds(left, right, epsilon));
 
                 return x;
             };
@@ -304,9 +304,9 @@ namespace MultiDimensionalOptimization.algo
             {
                 var b = GetMiddle(a, c);
                 double fa = f.Invoke(a), fb = f.Invoke(b), fc = f.Invoke(c);
-                while (checkBounds(a, c, epsilon))
+                while (CheckBounds(a, c, epsilon))
                 {
-                    var x = parabolicMinimum(a, b, c, fa, fb, fc);
+                    var x = ParabolicMinimum(a, b, c, fa, fb, fc);
                     var fx = f.Invoke(x);
                     if (fx < fb)
                     {
@@ -342,10 +342,95 @@ namespace MultiDimensionalOptimization.algo
                 return b;
             };
 
-            private static double parabolicMinimum(double a, double b, double c, double fa, double fb, double fc)
+            private static double ParabolicMinimum(double a, double b, double c, double fa, double fb, double fc)
             {
                 return b + 0.5 * ((fa - fb) * (c - b) * (c - b) - (fc - fb) * (b - a) * (b - a))
                     / ((fa - fb) * (c - b) + (fc - fb) * (b - a));
+            }
+
+            public static readonly InnerOptimizationAlgorithm BRENT = (f, a, c, epsilon) =>
+            {
+                double x, w, v, d, e, g, u, fx, fw, fv;
+                x = w = v = a + ReversedGoldenConst * (c - a);
+                fx = fw = fv = f.Invoke(x);
+                d = e = c - a;
+                while (CheckBounds(a, c, epsilon))
+                {
+                    g = e;
+                    e = d;
+                    if (Different(w, x, v) && Different(fw, fx, fv)
+                                           && (u = ParabolicMinimum(w, x, v, fw, fx, fv)) == u
+                                           && a <= u && u <= c && Math.Abs(u - x) < (g / 2))
+                    {
+                        // u - accepted
+                    }
+                    else
+                    {
+                        // u - rejected, u - golden section
+                        if (x < GetMiddle(a, c))
+                        {
+                            e = c - x;
+                            u = x + ReversedGoldenConst * e;
+                        }
+                        else
+                        {
+                            e = x - a;
+                            u = x - ReversedGoldenConst * e;
+                        }
+                    }
+
+                    double fu = f.Invoke(u);
+                    if (fu <= fx)
+                    {
+                        if (u >= x)
+                        {
+                            a = x;
+                        }
+                        else
+                        {
+                            c = x;
+                        }
+
+                        v = w;
+                        w = x;
+                        x = u;
+                        fv = fw;
+                        fw = fx;
+                        fx = fu;
+                    }
+                    else
+                    {
+                        if (u >= x)
+                        {
+                            c = u;
+                        }
+                        else
+                        {
+                            a = u;
+                        }
+
+                        if (fu <= fw || w == x)
+                        {
+                            v = w;
+                            w = u;
+                            fv = fw;
+                            fw = fu;
+                        }
+                        else if (fu <= fv || v == x || v == w)
+                        {
+                            v = u;
+                            fv = fu;
+                        }
+                    }
+
+                    d = c - a;
+                }
+
+                return x;
+            };
+            
+            private static bool Different(double a, double b, double c) {
+                return a != b && b != c && c != a;
             }
         }
 
