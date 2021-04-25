@@ -28,6 +28,18 @@ namespace MultiDimensionalOptimization.draw
         private readonly Dictionary<string, Algorithm> _algorithms;
         private Algorithm _algorithm;
 
+        private const string A11 = "a11";
+        private const string A12 = "a12";
+        private const string A21 = "a21";
+        private const string A22 = "a22";
+        private const string B1 = "b1";
+        private const string B2 = "b2";
+        private const string C = "c";
+        private const string Epsilon = "Epsilon";
+        private const string Radius = "Radius";
+        private const string XStart = "xStart";
+        private const string YStart = "yStart";
+
         public Window(Action refresh, Control.ControlCollection controls)
         {
             _updateGrid = true;
@@ -46,39 +58,52 @@ namespace MultiDimensionalOptimization.draw
 
         private void CreateParametersInputs()
         {
-            AddTextBox("a11", 2, 10, true);
-            AddTextBox("a12", 0, 40, true);
-            AddTextBox("a21", 0, 70, true);
-            AddTextBox("a22", 1, 100, true);
+            AddTextBox(A11, 2, 10, true);
+            AddTextBox(A12, 0, 40, true);
+            AddTextBox(A21, 0, 70, true);
+            AddTextBox(A22, 1, 100, true);
 
-            AddTextBox("b1", 0, 130, true);
-            AddTextBox("b2", 0, 160, true);
+            AddTextBox(B1, 0, 130, true);
+            AddTextBox(B2, 0, 160, true);
 
-            AddTextBox("c", 0, 190, true);
+            AddTextBox(C, 0, 190, true);
 
-            AddTextBox("r", 30, 250, true);
-            AddTextBox("epsilon", 0.00001, 280, false);
+            AddTextBox(Radius, 30, 250, true);
+            AddTextBox(Epsilon, 0.00001, 280, false);
 
-            AddTextBox("s1", 10, 340, false);
-            AddTextBox("s2", 10, 370, false);
+            AddTextBox(XStart, 10, 340, false);
+            AddTextBox(YStart, 10, 370, false);
         }
 
         private void CreateAlgoGroup()
         {
             var algoGroup = new GroupBox()
             {
-                Name = "Algorithms",
+                Text = "Algorithms",
                 Left = 5,
                 Top = 400,
+                BackColor = Color.White,
             };
-            AddAlgoButton("Gradient Descent", true, Optimization.GRADIENT_DESCENT, algoGroup, 10);
+            AddAlgoButton("Gradient Descent", true, Optimization.GRADIENT_DESCENT, algoGroup, 15);
             AddAlgoButton("Fastest Descent", false, Optimization.FASTEST_DESCENT, algoGroup, 40);
-            AddAlgoButton("Conjugate Gradient", false, Optimization.CONJUGATE_GRADIENT, algoGroup, 70);
+            AddAlgoButton("Conjugate Gradient", false, Optimization.CONJUGATE_GRADIENT, algoGroup, 65);
             _controls.Add(algoGroup);
         }
 
         private void AddTextBox(string name, double value, int offsetY, bool updateGrid)
         {
+            var label = new Label()
+            {
+                Text = name,
+                Left = 10,
+                Top = offsetY,
+                Width = 50,
+                BorderStyle = BorderStyle.Fixed3D,
+                BackColor = Color.White,
+                Anchor = AnchorStyles.Left & AnchorStyles.Top,
+            };
+            _controls.Add(label);
+            
             var textBox = new TextBox
             {
                 Multiline = false,
@@ -87,16 +112,19 @@ namespace MultiDimensionalOptimization.draw
                 AcceptsTab = false,
                 Text = value.ToString(CultureInfo.InvariantCulture),
                 Top = offsetY,
-                Left = 10,
+                Left = 70,
                 Height = 20,
                 Anchor = AnchorStyles.Left & AnchorStyles.Top,
-                
             };
-
             textBox.LostFocus += (sender, e) =>
             {
                 var oldV = _parameters[textBox.PlaceholderText];
-                TryParse(textBox.Text, out var newV);
+                if (!TryParse(textBox.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out var newV))
+                {
+                    textBox.BackColor = Color.OrangeRed;
+                    return;
+                }
+                textBox.BackColor = Color.White;
                 if (Math.Abs(oldV - newV) > newV * 0.0001)
                 {
                     _parameters[textBox.PlaceholderText] = newV;
@@ -161,14 +189,14 @@ namespace MultiDimensionalOptimization.draw
         {
             return new(2, new []
             {
-                GetParameter("a11"), GetParameter("a12"),
-                GetParameter("a21"), GetParameter("a22")
-            }, new [] {GetParameter("b1"), GetParameter("b2")}, GetParameter("c"));
+                GetParameter(A11), GetParameter(A12),
+                GetParameter(A21), GetParameter(A22)
+            }, new [] {GetParameter(B1), GetParameter(B2)}, GetParameter(C));
         }
 
         private double[] GetStartVector()
         {
-            return new[] { GetParameter("s1"), GetParameter("s2") };
+            return new[] { GetParameter(XStart), GetParameter(YStart) };
         }
 
         private double GetParameter(string name)
@@ -184,12 +212,12 @@ namespace MultiDimensionalOptimization.draw
 
         private double GetEpsilon()
         {
-            return GetParameter("epsilon");
+            return GetParameter(Epsilon);
         }
 
         private double GetRadius()
         {
-            return GetParameter("r");
+            return GetParameter(Radius);
         }
 
         private void CreateFunctionContoursBitmap(Function f, IList<double[]> values, double x, double y, double r)
