@@ -51,6 +51,10 @@ namespace MultiDimensionalOptimization.algo
                 int n = xArray.Length;
                 var result = new Result();
                 var x = algo.Invoke(f, AdvancedMath.ToVector(n, xArray), epsilon, result);
+                if (needToLog)
+                {
+                    Console.WriteLine();
+                }
                 result.X = AdvancedMath.ToArray(x);
                 result.Y = f.Apply(x);
                 return result;
@@ -208,15 +212,16 @@ namespace MultiDimensionalOptimization.algo
         
         private static int _lastSize = 0;
 
-        public static bool needToLog = false;
+        public static bool needToLog = true;
 
         private static void LogItr(int itr)
         {
             if (!needToLog) return;
             
             Console.Out.Write(new string('\b', _lastSize));
-            Console.Out.Write(itr);
-            _lastSize = itr.ToString().Length;
+            var newStr = $"Iterations: {itr}";
+            Console.Out.Write(newStr);
+            _lastSize = newStr.Length;
         }
     }
 }
