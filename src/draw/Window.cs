@@ -109,9 +109,9 @@ namespace MultiDimensionalOptimization.draw
 
         private void CreateParametersInputs()
         {
-            AddTextBox(A11, 2, 10, true);
+            AddTextBox(A11, 20, 10, true);
             AddTextBox(A12, 0, 40, true);
-            AddTextBox(A21, 0, 70, true);
+            AddTextBox(A21, 1, 70, true);
             AddTextBox(A22, 1, 100, true);
 
             AddTextBox(B1, 0, 130, true);
@@ -135,8 +135,8 @@ namespace MultiDimensionalOptimization.draw
                 Top = 420,
                 BackColor = Color.White,
             };
-            AddAlgoButton("Gradient Descent", true, Optimization.GRADIENT_DESCENT, algoGroup, 15);
-            AddAlgoButton("Fastest Descent", false, Optimization.FASTEST_DESCENT, algoGroup, 40);
+            AddAlgoButton("Gradient Descent", false, Optimization.GRADIENT_DESCENT, algoGroup, 15);
+            AddAlgoButton("Fastest Descent", true, Optimization.FASTEST_DESCENT, algoGroup, 40);
             AddAlgoButton("Conjugate Gradient", false, Optimization.CONJUGATE_GRADIENT, algoGroup, 65);
             _controls.Add(algoGroup);
         }
@@ -157,8 +157,7 @@ namespace MultiDimensionalOptimization.draw
                 BackColor = Color.White,
                 Anchor = AnchorStyles.Left & AnchorStyles.Top
             };
-            _controls.Add(label);
-            
+
             var textBox = new TextBox
             {
                 Multiline = false,
@@ -191,9 +190,10 @@ namespace MultiDimensionalOptimization.draw
                     Reload();
                 }
             };
-
-            _controls.Add(textBox);
             _parameters.Add(name, value);
+            
+            _controls.Add(label);
+            _controls.Add(textBox);
         }
 
         private void Reload()
