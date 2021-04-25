@@ -195,12 +195,13 @@ namespace MultiDimensionalOptimization.draw
                 Text = FastestDescentInnerAlgorithm,
                 Left = 10,
                 Top = 540,
-                Height = 95,
+                Height = 120,
                 BackColor = Color.White,
             };
             AddInnerAlgoButton("Dichotomy", false, Optimization.OneDimensionalOptimization.DICHOTOMY, innerAlgoGroup, 15);
             AddInnerAlgoButton("Golden Section Search", true, Optimization.OneDimensionalOptimization.GOLDEN_SECTION, innerAlgoGroup, 40);
             AddInnerAlgoButton("Fibonacci Search", false, Optimization.OneDimensionalOptimization.FIBONACCI, innerAlgoGroup, 65);
+            AddInnerAlgoButton("Parabolic Search", false, Optimization.OneDimensionalOptimization.PARABOLIC, innerAlgoGroup, 90);
             
             _controls.Add(innerAlgoGroup);
             return innerAlgoGroup;

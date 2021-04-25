@@ -8,6 +8,7 @@ using MathNet.Numerics.LinearAlgebra;
 namespace MultiDimensionalOptimization.algo
 {
     using AlgorithmParameters = Dictionary<string, object>;
+
     public class Result
     {
         public double[] X { get; set; }
@@ -24,9 +25,11 @@ namespace MultiDimensionalOptimization.algo
         }
     }
 
-    public delegate Result Algorithm(Function f, double[] xArray, double epsilon, AlgorithmParameters parameters = null);
+    public delegate Result Algorithm(Function f, double[] xArray, double epsilon,
+        AlgorithmParameters parameters = null);
 
-    public delegate double InnerOptimizationAlgorithm(Func<double, double> f, double left, double right, double epsilon);
+    public delegate double
+        InnerOptimizationAlgorithm(Func<double, double> f, double left, double right, double epsilon);
 
     /**
      * double diagonal elements and normal other
@@ -95,8 +98,8 @@ namespace MultiDimensionalOptimization.algo
             var maxEigenValue = GetMaxEigenValue(f);
 
             Matrix<double> grad;
-            var oneDAlgo = parameters is not null 
-                ? (InnerOptimizationAlgorithm) parameters[InnerAlgorithm] 
+            var oneDAlgo = parameters is not null
+                ? (InnerOptimizationAlgorithm) parameters[InnerAlgorithm]
                 : OneDimensionalOptimization.GOLDEN_SECTION;
 
             while (AdvancedMath.Norm(AdvancedMath.ToArray(grad = f.Gradient(x))) > epsilon && itr < MAX_ITR)
@@ -107,7 +110,7 @@ namespace MultiDimensionalOptimization.algo
                 // TODO what is love?
                 var x1 = x;
                 var grad1 = grad;
-                
+
                 var alpha = oneDAlgo.Invoke(
                     arg => f.Apply(x1.Subtract(grad1.Multiply(arg))),
                     0,
@@ -129,7 +132,7 @@ namespace MultiDimensionalOptimization.algo
             var norm = AdvancedMath.Norm(AdvancedMath.ToArray(grad));
             var p = grad.Multiply(-1);
             var itr = 0;
-            
+
             while (norm > epsilon && itr < MAX_ITR)
             {
                 result.AddLevel(AdvancedMath.ToArray(x));
@@ -158,6 +161,10 @@ namespace MultiDimensionalOptimization.algo
 
         public static class OneDimensionalOptimization
         {
+            private static bool checkBounds(double left, double right, double epsilon) {
+                return Math.Abs(left - right) >= epsilon;
+            }
+            
             public static readonly InnerOptimizationAlgorithm GOLDEN_SECTION = (f, left, right, epsilon) =>
             {
                 var delta = (right - left) * ReversedGoldenConst;
@@ -208,7 +215,7 @@ namespace MultiDimensionalOptimization.algo
                     {
                         left = x;
                     }
-                } while (right - left > epsilon);
+                } while (checkBounds(left, right, epsilon));
 
                 return x;
             };
@@ -269,23 +276,76 @@ namespace MultiDimensionalOptimization.algo
 
                 return GetMiddle(an, bn);
             };
-            
-            private static int calculateFibonacciConst(double left, double right, double epsilon) {
-                return Math.Min(1475, Math.Abs(FIBONACCI_NUMBERS.BinarySearch( (right - left) / epsilon)) + 1);
+
+            private static int calculateFibonacciConst(double left, double right, double epsilon)
+            {
+                return Math.Min(1475, Math.Abs(FIBONACCI_NUMBERS.BinarySearch((right - left) / epsilon)) + 1);
             }
 
-            private static double getFibonacciVar(double a, double b, int n, int i, int j) {
+            private static double getFibonacciVar(double a, double b, int n, int i, int j)
+            {
                 return a + FIBONACCI_NUMBERS[n - i] / FIBONACCI_NUMBERS[n - j] * (b - a);
             }
-            
+
             private static readonly List<double> FIBONACCI_NUMBERS = getNFibonacci();
 
-            private static List<double> getNFibonacci() {
+            private static List<double> getNFibonacci()
+            {
                 var arr = new List<double>(1476) {1.0, 1.0};
-                for (var i = 2; i < 1476; i++) {
+                for (var i = 2; i < 1476; i++)
+                {
                     arr.Add(arr[i - 1] + arr[i - 2]);
                 }
+
                 return arr;
+            }
+
+            public static readonly InnerOptimizationAlgorithm PARABOLIC = (f, a, c, epsilon) =>
+            {
+                var b = GetMiddle(a, c);
+                double fa = f.Invoke(a), fb = f.Invoke(b), fc = f.Invoke(c);
+                while (checkBounds(a, c, epsilon))
+                {
+                    var x = parabolicMinimum(a, b, c, fa, fb, fc);
+                    var fx = f.Invoke(x);
+                    if (fx < fb)
+                    {
+                        if (x < b)
+                        {
+                            c = b;
+                            fc = fb;
+                        }
+                        else
+                        {
+                            a = b;
+                            fa = fb;
+                        }
+
+                        b = x;
+                        fb = fx;
+                    }
+                    else
+                    {
+                        if (x < b)
+                        {
+                            a = x;
+                            fa = fx;
+                        }
+                        else
+                        {
+                            c = x;
+                            fc = fx;
+                        }
+                    }
+                }
+
+                return b;
+            };
+
+            private static double parabolicMinimum(double a, double b, double c, double fa, double fb, double fc)
+            {
+                return b + 0.5 * ((fa - fb) * (c - b) * (c - b) - (fc - fb) * (b - a) * (b - a))
+                    / ((fa - fb) * (c - b) + (fc - fb) * (b - a));
             }
         }
 
