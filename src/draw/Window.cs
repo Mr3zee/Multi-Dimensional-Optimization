@@ -35,26 +35,26 @@ namespace MultiDimensionalOptimization.draw
             _vectorsPen = new Pen(Color.Black, 1) {EndCap = LineCap.ArrowAnchor};
             _parameters = new Dictionary<string, double>();
             
-            AddTextBox("a11", 2, 10);
-            AddTextBox("a12", 0, 40);
-            AddTextBox("a21", 0, 70);
-            AddTextBox("a22", 1, 100);
+            AddTextBox("a11", 2, 10, true);
+            AddTextBox("a12", 0, 40, true);
+            AddTextBox("a21", 0, 70, true);
+            AddTextBox("a22", 1, 100, true);
             
-            AddTextBox("b1", 0, 130);
-            AddTextBox("b2", 0, 160);
+            AddTextBox("b1", 0, 130, true);
+            AddTextBox("b2", 0, 160, true);
             
-            AddTextBox("c", 0, 190);
+            AddTextBox("c", 0, 190, true);
             
-            AddTextBox("r", 30, 250);
-            AddTextBox("epsilon", 0.00001, 280);
+            AddTextBox("r", 30, 250, true);
+            AddTextBox("epsilon", 0.00001, 280, false);
             
-            AddTextBox("s1", 10, 340);
-            AddTextBox("s2", 10, 370);
+            AddTextBox("s1", 10, 340, false);
+            AddTextBox("s2", 10, 370, false);
             
             Update();
         }
 
-        private void AddTextBox(string name, double value, int offsetY)
+        private void AddTextBox(string name, double value, int offsetY, bool updateGrid)
         {
             var textBox = new TextBox
             {
@@ -77,7 +77,7 @@ namespace MultiDimensionalOptimization.draw
                 if (Math.Abs(oldV - newV) > newV * 0.0001)
                 {
                     _parameters[textBox.PlaceholderText] = newV;
-                    if (name == "r")
+                    if (updateGrid)
                     {
                         _updateGrid = true;
                     }
@@ -138,7 +138,7 @@ namespace MultiDimensionalOptimization.draw
             return GetParameter("r");
         }
 
-        private void CreateFunctionContoursBitmap(Function f, List<double[]> values, double x, double y, double r)
+        private void CreateFunctionContoursBitmap(Function f, IList<double[]> values, double x, double y, double r)
         {
             var gradientColors = GetColorsGradient(_maximalGradientColor, _minimalGradientColor, values.Count);
             var minX = x - r; 
@@ -160,7 +160,7 @@ namespace MultiDimensionalOptimization.draw
             }
             
             _vectors = new List<double[]>();
-            values.Add(new []{x, y});
+            values.Add(new [] {x, y});
             
             foreach (var value in values)
             {
@@ -208,14 +208,13 @@ namespace MultiDimensionalOptimization.draw
         private static void GenerateBitmap(double value, double[][] grid, Color color, Bitmap bitmap)
         {
             var epsilon = value * Precision;
-            for (int i = 0; i < Width; i++)
+            for (var i = 0; i < Width; i++)
             {
-                for (int j = 0; j < Height; j++)
+                for (var j = 0; j < Height; j++)
                 {
-                    if (Math.Abs(grid[i][j] - value) <= epsilon)
-                    {
-                        bitmap.SetPixel(i, j, color);
-                    }
+                    if (!(Math.Abs(grid[i][j] - value) <= epsilon)) continue;
+                    
+                    bitmap.SetPixel(i, j, color);
                 }
             }
         }
