@@ -194,7 +194,7 @@ namespace MultiDimensionalOptimization.draw
             {
                 Text = FastestDescentInnerAlgorithm,
                 Left = 10,
-                Top = 540,
+                Top = 520,
                 Height = 145,
                 BackColor = Color.White,
             };
@@ -214,7 +214,7 @@ namespace MultiDimensionalOptimization.draw
             {
                 Text = "Algorithms",
                 Left = 10,
-                Top = 420,
+                Top = 410,
                 BackColor = Color.White,
             };
             AddAlgoButton("Gradient Descent", false, Optimization.GRADIENT_DESCENT, algoGroup, 15, false, innerAlgorithms);
