@@ -381,13 +381,18 @@ namespace MultiDimensionalOptimization.draw
         {
             DrawGrid(e.Graphics, LinesCount);
             e.Graphics.DrawImage(_bitmap, 0, 0);
+            DrawVectors(e.Graphics);
+        }
+
+        private void DrawVectors(Graphics g)
+        {
             for (var i = 0; i < _vectors.Count - 1; i++)
             {
                 var x1 = _vectors[i][0];
                 var y1 = _vectors[i][1];
                 var x2 = _vectors[i + 1][0];
                 var y2 = _vectors[i + 1][1];
-                e.Graphics.DrawLine(_vectorsPen, x1, y1, x2, y2);
+                g.DrawLine(_vectorsPen, x1, y1, x2, y2);
             }
         }
 
