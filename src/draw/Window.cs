@@ -423,7 +423,7 @@ namespace MultiDimensionalOptimization.draw
             {
                 for (var j = 0; j < ScreenHeight; j++)
                 {
-                    if (!AdvancedMath.Equals(grid[i][j], value, epsilon)) continue;
+                    if (Math.Abs(grid[i][j] - value) > epsilon) continue;
                     
                     bitmap.SetPixel(i, j, color);
                 }
