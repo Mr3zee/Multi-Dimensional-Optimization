@@ -8,8 +8,8 @@ namespace MultiDimensionalOptimization
         public ContourForm()
         {
             InitializeComponent();
-            Width = Window.Width;
-            Height = Window.Height;
+            Width = Window.ScreenWidth;
+            Height = Window.ScreenHeight;
             var window = new Window(Refresh, Controls);
             Paint += window.Paint;
 

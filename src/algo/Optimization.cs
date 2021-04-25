@@ -8,27 +8,17 @@ namespace MultiDimensionalOptimization.algo
 {
     public class Result
     {
-        private double[] x;
-        private double y;
-        private readonly List<double[]> levels = new();
+        public double[] X { get; set; }
 
-        public double[] X
-        {
-            get => x;
-            set => x = value;
-        }
+        public double Y { get; set; }
+        
+        public double Itr { get; set; }
 
-        public double Y
-        {
-            get => y;
-            set => y = value;
-        }
-
-        public List<double[]> Levels => levels;
+        public List<double[]> Levels { get; } = new();
 
         public void AddLevel(double[] level)
         {
-            levels.Add(level);
+            Levels.Add(level);
         }
     }
 
@@ -38,7 +28,7 @@ namespace MultiDimensionalOptimization.algo
      * double diagonal elements and normal other
      */
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public class Optimization
+    public static class Optimization
     {
         private const double MAX_ITR = 10000;
 
@@ -87,6 +77,8 @@ namespace MultiDimensionalOptimization.algo
                 }
             }
 
+            result.Itr = itr;
+
             return x;
         });
 
@@ -108,6 +100,8 @@ namespace MultiDimensionalOptimization.algo
                     2 / maxEigenValue,
                     epsilon
                 );
+                
+                result.Itr = itr;
 
                 x = x.Subtract(grad.Multiply(alpha));
             }
@@ -135,6 +129,8 @@ namespace MultiDimensionalOptimization.algo
                 norm = newNorm;
                 p = grad.Multiply(-1).Add(p.Multiply(beta));
             }
+            
+            result.Itr = itr;
 
             return x;
         });
@@ -212,7 +208,7 @@ namespace MultiDimensionalOptimization.algo
         
         private static int _lastSize = 0;
 
-        public static bool needToLog = true;
+        public static bool needToLog = false;
 
         private static void LogItr(int itr)
         {

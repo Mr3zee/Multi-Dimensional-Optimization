@@ -11,9 +11,10 @@ namespace MultiDimensionalOptimization.draw
 {
     public class Window
     {
-        public const int Width = 1280;
-        public const int Height = 720;
-        private const double Ratio = (double) Height / Width;
+        public const int ScreenWidth = 1280;
+        public const int ScreenHeight = 720;
+        
+        private const double Ratio = (double) ScreenHeight / ScreenWidth;
         private readonly Action _refresh;
         private readonly Control.ControlCollection _controls;
         private Bitmap _bitmap;
@@ -25,8 +26,9 @@ namespace MultiDimensionalOptimization.draw
         private readonly Color _minimalGradientColor = Color.Aqua;
         private readonly Color _maximalGradientColor = Color.Coral;
         private readonly Dictionary<string, double> _parameters; 
+        private readonly Dictionary<string, TextBox> _results; 
         private readonly Dictionary<string, Algorithm> _algorithms;
-        private Algorithm _algorithm;
+        private Algorithm _currentAlgorithm;
 
         private const string A11 = "a11";
         private const string A12 = "a12";
@@ -39,6 +41,11 @@ namespace MultiDimensionalOptimization.draw
         private const string Radius = "Radius";
         private const string XStart = "xStart";
         private const string YStart = "yStart";
+        
+        private const string XResult = "X Result";
+        private const string YResult = "Y Result";
+        private const string Minimum = "Minimum";
+        private const string Iterations = "Iterations";
 
         public Window(Action refresh, Control.ControlCollection controls)
         {
@@ -49,11 +56,55 @@ namespace MultiDimensionalOptimization.draw
             _vectorsPen = new Pen(Color.Black, 1) {EndCap = LineCap.ArrowAnchor};
             _parameters = new Dictionary<string, double>();
             _algorithms = new Dictionary<string, Algorithm>();
+            _results = new Dictionary<string, TextBox>();
             
             CreateParametersInputs();
             CreateAlgoGroup();
+            CreateResultsOutputs();
 
             Update();
+        }
+
+        private void CreateResultsOutputs()
+        {
+            AddResultBox(XResult, 10);
+            AddResultBox(YResult, 40);
+            AddResultBox(Minimum, 70);
+            AddResultBox(Iterations, 100);
+        }
+
+        private void AddResultBox(string name, int offsetY)
+        {
+            var resultBox = new TextBox
+            {
+                Multiline = false,
+                ReadOnly = true,
+                PlaceholderText = "No result",
+                Top = offsetY,
+                Height = 20,
+                Width = 140,
+                BackColor = Color.White,
+                Anchor = AnchorStyles.Right & AnchorStyles.Top
+            };
+            resultBox.Left = ScreenWidth - resultBox.Width - 30;
+            
+            var resultLabel = new Label
+            {
+                Top = offsetY,
+                Text = name,
+                Height = 23,
+                Width = 80,
+                TextAlign = ContentAlignment.MiddleLeft,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = Color.White,
+                Anchor = AnchorStyles.Left & AnchorStyles.Top,
+            };
+            resultLabel.Left = resultBox.Left - resultLabel.Width - 10;
+
+            _results[name] = resultBox;
+            
+            _controls.Add(resultLabel);
+            _controls.Add(resultBox);
         }
 
         private void CreateParametersInputs()
@@ -77,11 +128,11 @@ namespace MultiDimensionalOptimization.draw
 
         private void CreateAlgoGroup()
         {
-            var algoGroup = new GroupBox()
+            var algoGroup = new GroupBox
             {
                 Text = "Algorithms",
-                Left = 5,
-                Top = 400,
+                Left = 10,
+                Top = 420,
                 BackColor = Color.White,
             };
             AddAlgoButton("Gradient Descent", true, Optimization.GRADIENT_DESCENT, algoGroup, 15);
@@ -90,17 +141,21 @@ namespace MultiDimensionalOptimization.draw
             _controls.Add(algoGroup);
         }
 
+        private const double InputChangePrecision = 0.00001;
+
         private void AddTextBox(string name, double value, int offsetY, bool updateGrid)
         {
-            var label = new Label()
+            var label = new Label
             {
                 Text = name,
                 Left = 10,
                 Top = offsetY,
-                Width = 50,
-                BorderStyle = BorderStyle.Fixed3D,
+                Height = 23,
+                Width = 65,
+                TextAlign = ContentAlignment.MiddleLeft,
+                BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.White,
-                Anchor = AnchorStyles.Left & AnchorStyles.Top,
+                Anchor = AnchorStyles.Left & AnchorStyles.Top
             };
             _controls.Add(label);
             
@@ -112,7 +167,7 @@ namespace MultiDimensionalOptimization.draw
                 AcceptsTab = false,
                 Text = value.ToString(CultureInfo.InvariantCulture),
                 Top = offsetY,
-                Left = 70,
+                Left = 20 + label.Width,
                 Height = 20,
                 Anchor = AnchorStyles.Left & AnchorStyles.Top,
             };
@@ -125,7 +180,8 @@ namespace MultiDimensionalOptimization.draw
                     return;
                 }
                 textBox.BackColor = Color.White;
-                if (Math.Abs(oldV - newV) > newV * 0.0001)
+                
+                if (Math.Abs(oldV - newV) > newV * InputChangePrecision)
                 {
                     _parameters[textBox.PlaceholderText] = newV;
                     if (updateGrid)
@@ -158,13 +214,13 @@ namespace MultiDimensionalOptimization.draw
             button.Width = (TextRenderer.MeasureText(button.Text, button.Font)).Width + 20;
             if (isChecked)
             {
-                _algorithm = algorithm;
+                _currentAlgorithm = algorithm;
             }
             button.CheckedChanged += (sender, args) =>
             {
                 if (button.Checked)
                 {
-                    _algorithm = _algorithms[button.Text];
+                    _currentAlgorithm = _algorithms[button.Text];
                     Reload();
                 }
             };
@@ -181,8 +237,22 @@ namespace MultiDimensionalOptimization.draw
             var startVector = GetStartVector();
 
             var result = algorithm.Invoke(f, startVector, epsilon);
-            
+            SetResult(result);
+
             CreateFunctionContoursBitmap(f, result.Levels, result.X[0], result.X[1], radius);
+        }
+
+        private void SetResult(Result result)
+        {
+            SetResult(XResult, result.X[0]);
+            SetResult(YResult, result.X[1]);
+            SetResult(Minimum, result.Y);
+            SetResult(Iterations, result.Itr);
+        }
+        
+        private void SetResult(string name, double value)
+        {
+            _results[name].Text = value.ToString(CultureInfo.InvariantCulture);
         }
 
         private Function GetFunction()
@@ -201,13 +271,12 @@ namespace MultiDimensionalOptimization.draw
 
         private double GetParameter(string name)
         {
-            // TODO check
             return _parameters[name];
         }
 
         private Algorithm GetAlgorithm()
         {
-            return _algorithm;
+            return _currentAlgorithm;
         }
 
         private double GetEpsilon()
@@ -234,7 +303,7 @@ namespace MultiDimensionalOptimization.draw
                 _updateGrid = false;
             }
 
-            _bitmap = new Bitmap(Width, Height);
+            _bitmap = new Bitmap(ScreenWidth, ScreenHeight);
 
             for (var i = 0; i < values.Count; i++)
             {
@@ -246,8 +315,8 @@ namespace MultiDimensionalOptimization.draw
             
             foreach (var value in values)
             {
-                var windowX = (value[0] - minX) / (2 * r) * Width;
-                var windowY = (value[1] - minY) / (2 * r * Ratio) * Height;
+                var windowX = (value[0] - minX) / (2 * r) * ScreenWidth;
+                var windowY = (value[1] - minY) / (2 * r * Ratio) * ScreenHeight;
                 _vectors.Add(new [] { windowX, windowY });
             }
         }
@@ -272,16 +341,16 @@ namespace MultiDimensionalOptimization.draw
 
         private void DrawGrid(Graphics g, int count)
         {
-            const int centerX = Width / 2;
-            const int centerY = Height / 2;
-            var delta = Width / count;
+            const int centerX = ScreenWidth / 2;
+            const int centerY = ScreenHeight / 2;
+            var delta = ScreenWidth / count;
 
             for (var i = 0; i < (count + 1) / 2; i++)
             {
-                g.DrawLine(_gridPen, centerX - i * delta, 0, centerX - i * delta, Height);
-                g.DrawLine(_gridPen, centerX + i * delta, 0, centerX + i * delta, Height);
-                g.DrawLine(_gridPen, 0, centerY - i * delta, Width, centerY - i * delta);
-                g.DrawLine(_gridPen, 0, centerY + i * delta, Width, centerY + i * delta);
+                g.DrawLine(_gridPen, centerX - i * delta, 0, centerX - i * delta, ScreenHeight);
+                g.DrawLine(_gridPen, centerX + i * delta, 0, centerX + i * delta, ScreenHeight);
+                g.DrawLine(_gridPen, 0, centerY - i * delta, ScreenWidth, centerY - i * delta);
+                g.DrawLine(_gridPen, 0, centerY + i * delta, ScreenWidth, centerY + i * delta);
             }
         }
 
@@ -290,9 +359,9 @@ namespace MultiDimensionalOptimization.draw
         private static void GenerateBitmap(double value, double[][] grid, Color color, Bitmap bitmap)
         {
             var epsilon = value * Precision;
-            for (var i = 0; i < Width; i++)
+            for (var i = 0; i < ScreenWidth; i++)
             {
-                for (var j = 0; j < Height; j++)
+                for (var j = 0; j < ScreenHeight; j++)
                 {
                     if (!(Math.Abs(grid[i][j] - value) <= epsilon)) continue;
                     
@@ -309,14 +378,14 @@ namespace MultiDimensionalOptimization.draw
             double maxY
         )
         {
-            var grid = new double[Width][];
-            var stepX = (maxX - minX) / Width;
-            var stepY = (maxY - minY) / Height;
+            var grid = new double[ScreenWidth][];
+            var stepX = (maxX - minX) / ScreenWidth;
+            var stepY = (maxY - minY) / ScreenHeight;
             var vector = new double[2];
-            for (var i = 0; i < Width; i++)
+            for (var i = 0; i < ScreenWidth; i++)
             {
-                grid[i] = new double[Height];
-                for (var j = 0; j < Height; j++)
+                grid[i] = new double[ScreenHeight];
+                for (var j = 0; j < ScreenHeight; j++)
                 {
                     vector[0] = minX + i * stepX;
                     vector[1] = minY + j * stepY;
