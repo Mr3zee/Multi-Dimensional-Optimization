@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection.Metadata;
 using MathNet.Numerics.LinearAlgebra;
 
 namespace MultiDimensionalOptimization.algo
 {
+    using AlgorithmParameters = Dictionary<string, object>;
     public class Result
     {
         public double[] X { get; set; }
 
         public double Y { get; set; }
-        
+
         public double Itr { get; set; }
 
         public List<double[]> Levels { get; } = new();
@@ -22,8 +24,10 @@ namespace MultiDimensionalOptimization.algo
         }
     }
 
-    public delegate Result Algorithm(Function f, double[] xArray, double epsilon);
-    
+    public delegate Result Algorithm(Function f, double[] xArray, double epsilon, AlgorithmParameters parameters = null);
+
+    public delegate double InnerOptimizationAlgorithm(Func<double, double> f, double left, double right, double epsilon);
+
     /**
      * double diagonal elements and normal other
      */
@@ -31,31 +35,34 @@ namespace MultiDimensionalOptimization.algo
     public static class Optimization
     {
         private const double MAX_ITR = 10000;
+        public const string InnerAlgorithm = "Inner Algorithm";
 
-        private delegate Matrix<double> InnerAlgo(Function f, Matrix<double> x,  double epsilon, Result result);
+        private delegate Matrix<double> InnerAlgo(Function f, Matrix<double> x, double epsilon,
+            AlgorithmParameters parameters, Result result);
 
         private static Algorithm UnwrapAlgorithm(InnerAlgo algo)
         {
-            return (f, xArray, epsilon) =>
+            return (f, xArray, epsilon, parameters) =>
             {
-                int n = xArray.Length;
+                var n = xArray.Length;
                 var result = new Result();
-                var x = algo.Invoke(f, AdvancedMath.ToVector(n, xArray), epsilon, result);
+                var x = algo.Invoke(f, AdvancedMath.ToVector(n, xArray), epsilon, parameters, result);
                 if (needToLog)
                 {
                     Console.WriteLine();
                 }
+
                 result.X = AdvancedMath.ToArray(x);
                 result.Y = f.Apply(x);
                 return result;
             };
         }
 
-        public static readonly Algorithm GRADIENT_DESCENT = UnwrapAlgorithm((f, x, epsilon, result) =>
+        public static readonly Algorithm GRADIENT_DESCENT = UnwrapAlgorithm((f, x, epsilon, parameters, result) =>
         {
             var itr = 0;
-            
-            double alpha = 2 / GetMaxEigenValue(f);
+
+            var alpha = 2 / GetMaxEigenValue(f);
 
             var fx = f.Apply(x);
             Matrix<double> grad;
@@ -82,39 +89,44 @@ namespace MultiDimensionalOptimization.algo
             return x;
         });
 
-        public static readonly Algorithm FASTEST_DESCENT = UnwrapAlgorithm((f, x, epsilon, result) =>
+        public static readonly Algorithm FASTEST_DESCENT = UnwrapAlgorithm((f, x, epsilon, parameters, result) =>
         {
             var itr = 0;
             var maxEigenValue = GetMaxEigenValue(f);
 
             Matrix<double> grad;
+            var oneDAlgo = parameters is not null 
+                ? (InnerOptimizationAlgorithm) parameters[InnerAlgorithm] 
+                : OneDimensionalOptimization.GOLDEN_SECTION;
+
             while (AdvancedMath.Norm(AdvancedMath.ToArray(grad = f.Gradient(x))) > epsilon && itr < MAX_ITR)
             {
                 result.AddLevel(AdvancedMath.ToArray(x));
                 itr++;
                 LogItr(itr);
                 // TODO what is love?
-                var alpha = OneDimensionalOptimization.GOLDEN_SECTION(
+                var alpha = oneDAlgo.Invoke(
                     arg => f.Apply(x.Subtract(grad.Multiply(arg))),
                     0,
                     2 / maxEigenValue,
                     epsilon
                 );
-                
+
                 result.Itr = itr;
 
                 x = x.Subtract(grad.Multiply(alpha));
             }
-            
+
             return x;
         });
 
-        public static readonly Algorithm CONJUGATE_GRADIENT = UnwrapAlgorithm((f, x, epsilon, result) =>
+        public static readonly Algorithm CONJUGATE_GRADIENT = UnwrapAlgorithm((f, x, epsilon, parameters, result) =>
         {
             var grad = f.Gradient(x);
-            double norm = AdvancedMath.Norm(AdvancedMath.ToArray(grad));
+            var norm = AdvancedMath.Norm(AdvancedMath.ToArray(grad));
             var p = grad.Multiply(-1);
             var itr = 0;
+            
             while (norm > epsilon && itr < MAX_ITR)
             {
                 result.AddLevel(AdvancedMath.ToArray(x));
@@ -129,7 +141,7 @@ namespace MultiDimensionalOptimization.algo
                 norm = newNorm;
                 p = grad.Multiply(-1).Add(p.Multiply(beta));
             }
-            
+
             result.Itr = itr;
 
             return x;
@@ -141,17 +153,17 @@ namespace MultiDimensionalOptimization.algo
             return eigenValues.Max();
         }
 
-        private static class OneDimensionalOptimization
+        public static class OneDimensionalOptimization
         {
-            public static double GOLDEN_SECTION(Func<double, double> f, double left, double right, double epsilon)
+            public static readonly InnerOptimizationAlgorithm GOLDEN_SECTION = (f, left, right, epsilon) =>
             {
-                double delta = (right - left) * ReversedGoldenConst;
+                var delta = (right - left) * ReversedGoldenConst;
 
-                double x2 = left + delta;
-                double x1 = right - delta;
+                var x2 = left + delta;
+                var x1 = right - delta;
 
-                double f2 = f.Invoke(x2);
-                double f1 = f.Invoke(x1);
+                var f2 = f.Invoke(x2);
+                var f1 = f.Invoke(x1);
 
                 do
                 {
@@ -175,9 +187,9 @@ namespace MultiDimensionalOptimization.algo
                 } while (delta > epsilon);
 
                 return GetMiddle(left, right);
-            }
+            };
 
-            public static double DICHOTOMY(Func<double, double> f, double left, double right, double epsilon)
+            public static InnerOptimizationAlgorithm DICHOTOMY = (f, left, right, epsilon) =>
             {
                 double x;
                 do
@@ -196,7 +208,7 @@ namespace MultiDimensionalOptimization.algo
                 } while (right - left > epsilon);
 
                 return x;
-            }
+            };
 
             private static readonly double ReversedGoldenConst = (Math.Sqrt(5) - 1) / 2;
 
@@ -205,7 +217,7 @@ namespace MultiDimensionalOptimization.algo
                 return (a - b) / 2 + b;
             }
         }
-        
+
         private static int _lastSize = 0;
 
         public static bool needToLog = false;
@@ -213,7 +225,7 @@ namespace MultiDimensionalOptimization.algo
         private static void LogItr(int itr)
         {
             if (!needToLog) return;
-            
+
             Console.Out.Write(new string('\b', _lastSize));
             var newStr = $"Iterations: {itr}";
             Console.Out.Write(newStr);
