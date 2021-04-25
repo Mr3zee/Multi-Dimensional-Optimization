@@ -204,8 +204,8 @@ namespace MultiDimensionalOptimization.algo
                 {
                     g = e;
                     e = d;
-                    if (Different(w, x, v) && Different(fw, fx, fv)
-                                           && (u = ParabolicMinimum(w, x, v, fw, fx, fv)) == u
+                    if (Different(w, x, v) && Different(fw, fx, fv) 
+                                           && AdvancedMath.Equals(u = ParabolicMinimum(w, x, v, fw, fx, fv), u)
                                            && a <= u && u <= c && Math.Abs(u - x) < (g / 2))
                     {
                         // u - accepted
@@ -225,7 +225,7 @@ namespace MultiDimensionalOptimization.algo
                         }
                     }
 
-                    double fu = f.Invoke(u);
+                    var fu = f.Invoke(u);
                     if (fu <= fx)
                     {
                         if (u >= x)
@@ -255,14 +255,14 @@ namespace MultiDimensionalOptimization.algo
                             a = u;
                         }
 
-                        if (fu <= fw || w == x)
+                        if (fu <= fw || AdvancedMath.Equals(w, x))
                         {
                             v = w;
                             w = u;
                             fv = fw;
                             fw = fu;
                         }
-                        else if (fu <= fv || v == x || v == w)
+                        else if (fu <= fv || AdvancedMath.Equals(v, x) || AdvancedMath.Equals(v, w))
                         {
                             v = u;
                             fv = fu;
@@ -276,7 +276,7 @@ namespace MultiDimensionalOptimization.algo
             };
             
             private static bool Different(double a, double b, double c) {
-                return a != b && b != c && c != a;
+                return !AdvancedMath.Equals(a, b) && !AdvancedMath.Equals(b, c) && !AdvancedMath.Equals(c, a);
             }
     }
 }

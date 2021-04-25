@@ -65,5 +65,12 @@ namespace MultiDimensionalOptimization.algo
 
             return retval;
         }
+        
+        private const double DoublePrecision = 1E-05;
+
+        public static bool Equals(double a, double b, double precision = DoublePrecision)
+        {
+            return Math.Abs(a - b) < a * precision;
+        }
     }
 }

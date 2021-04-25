@@ -416,14 +416,14 @@ namespace MultiDimensionalOptimization.draw
 
         private const double Precision = 0.02;
 
-        private static void GenerateBitmap(double value, double[][] grid, Color color, Bitmap bitmap)
+        private static void GenerateBitmap(double value, IReadOnlyList<double[]> grid, Color color, Bitmap bitmap)
         {
             var epsilon = value * Precision;
             for (var i = 0; i < ScreenWidth; i++)
             {
                 for (var j = 0; j < ScreenHeight; j++)
                 {
-                    if (!(Math.Abs(grid[i][j] - value) <= epsilon)) continue;
+                    if (!AdvancedMath.Equals(grid[i][j], value, epsilon)) continue;
                     
                     bitmap.SetPixel(i, j, color);
                 }
