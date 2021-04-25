@@ -105,8 +105,11 @@ namespace MultiDimensionalOptimization.algo
                 itr++;
                 LogItr(itr);
                 // TODO what is love?
+                var x1 = x;
+                var grad1 = grad;
+                
                 var alpha = oneDAlgo.Invoke(
-                    arg => f.Apply(x.Subtract(grad.Multiply(arg))),
+                    arg => f.Apply(x1.Subtract(grad1.Multiply(arg))),
                     0,
                     2 / maxEigenValue,
                     epsilon
@@ -189,14 +192,14 @@ namespace MultiDimensionalOptimization.algo
                 return GetMiddle(left, right);
             };
 
-            public static InnerOptimizationAlgorithm DICHOTOMY = (f, left, right, epsilon) =>
+            public static readonly InnerOptimizationAlgorithm DICHOTOMY = (f, left, right, epsilon) =>
             {
                 double x;
                 do
                 {
                     x = GetMiddle(left, right);
-                    double f1 = f.Invoke(x - epsilon / 2);
-                    double f2 = f.Invoke(x + epsilon / 2);
+                    var f1 = f.Invoke(x - epsilon / 2);
+                    var f2 = f.Invoke(x + epsilon / 2);
                     if (f1 < f2)
                     {
                         right = x;
@@ -215,6 +218,74 @@ namespace MultiDimensionalOptimization.algo
             private static double GetMiddle(double a, double b)
             {
                 return (a - b) / 2 + b;
+            }
+
+            public static readonly InnerOptimizationAlgorithm FIBONACCI = (f, left, right, epsilon) =>
+            {
+                var n = calculateFibonacciConst(left, right, epsilon);
+                var k = 0;
+                var lambda = getFibonacciVar(left, right, n, 2, 0);
+                var mu = getFibonacciVar(left, right, n, 1, 0);
+                double f_mu = f.Invoke(mu), f_lambda = f.Invoke(lambda);
+
+                double an, bn;
+                while (true)
+                {
+                    k++;
+                    if (k == n - 2)
+                    {
+                        mu = lambda + epsilon;
+                        if (f_mu >= f_lambda)
+                        {
+                            an = lambda;
+                            bn = right;
+                        }
+                        else
+                        {
+                            an = left;
+                            bn = mu;
+                        }
+
+                        break;
+                    }
+
+                    if (f_lambda > f_mu)
+                    {
+                        left = lambda;
+                        lambda = mu;
+                        f_lambda = f_mu;
+                        mu = getFibonacciVar(left, right, n, k + 1, k);
+                        f_mu = f.Invoke(mu);
+                    }
+                    else
+                    {
+                        right = mu;
+                        mu = lambda;
+                        f_mu = f_lambda;
+                        lambda = getFibonacciVar(left, right, n, k + 2, k);
+                        f_lambda = f.Invoke(lambda);
+                    }
+                }
+
+                return GetMiddle(an, bn);
+            };
+            
+            private static int calculateFibonacciConst(double left, double right, double epsilon) {
+                return Math.Min(1475, Math.Abs(FIBONACCI_NUMBERS.BinarySearch( (right - left) / epsilon)) + 1);
+            }
+
+            private static double getFibonacciVar(double a, double b, int n, int i, int j) {
+                return a + FIBONACCI_NUMBERS[n - i] / FIBONACCI_NUMBERS[n - j] * (b - a);
+            }
+            
+            private static readonly List<double> FIBONACCI_NUMBERS = getNFibonacci();
+
+            private static List<double> getNFibonacci() {
+                var arr = new List<double>(1476) {1.0, 1.0};
+                for (var i = 2; i < 1476; i++) {
+                    arr.Add(arr[i - 1] + arr[i - 2]);
+                }
+                return arr;
             }
         }
 

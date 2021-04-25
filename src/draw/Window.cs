@@ -156,7 +156,7 @@ namespace MultiDimensionalOptimization.draw
                 Height = 20,
                 Anchor = AnchorStyles.Left & AnchorStyles.Top,
             };
-            textBox.LostFocus += (sender, e) =>
+            textBox.LostFocus += (_, _) =>
             {
                 var oldV = _parameters[textBox.PlaceholderText];
                 if (!TryParse(textBox.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out var newV))
@@ -195,11 +195,12 @@ namespace MultiDimensionalOptimization.draw
                 Text = FastestDescentInnerAlgorithm,
                 Left = 10,
                 Top = 540,
-                Height = 70,
+                Height = 95,
                 BackColor = Color.White,
             };
-            AddInnerAlgoButton("Golden Section Search", true, Optimization.OneDimensionalOptimization.GOLDEN_SECTION, innerAlgoGroup, 15);
-            AddInnerAlgoButton("Dichotomy", false, Optimization.OneDimensionalOptimization.DICHOTOMY, innerAlgoGroup, 40);
+            AddInnerAlgoButton("Dichotomy", false, Optimization.OneDimensionalOptimization.DICHOTOMY, innerAlgoGroup, 15);
+            AddInnerAlgoButton("Golden Section Search", true, Optimization.OneDimensionalOptimization.GOLDEN_SECTION, innerAlgoGroup, 40);
+            AddInnerAlgoButton("Fibonacci Search", false, Optimization.OneDimensionalOptimization.FIBONACCI, innerAlgoGroup, 65);
             
             _controls.Add(innerAlgoGroup);
             return innerAlgoGroup;
@@ -235,7 +236,7 @@ namespace MultiDimensionalOptimization.draw
             {
                 _currentAlgorithm = algorithm;
             }
-            button.CheckedChanged += (sender, args) =>
+            button.CheckedChanged += (_, _) =>
             {
                 if (!button.Checked) return;
 
@@ -260,7 +261,7 @@ namespace MultiDimensionalOptimization.draw
             {
                 _algorithmParameters[FastestDescentInnerAlgorithm] = algorithm;
             }
-            button.CheckedChanged += (sender, args) =>
+            button.CheckedChanged += (_, _) =>
             {
                 if (!button.Checked) return;
                 
