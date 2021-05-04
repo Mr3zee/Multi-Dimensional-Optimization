@@ -54,12 +54,13 @@ namespace MultiDimensionalOptimization.draw
         private const string Radius = "Radius";
         private const string XStart = "xStart";
         private const string YStart = "yStart";
+        private const string Precision = "Precision";
         
         private const string XResult = "X Result";
         private const string YResult = "Y Result";
         private const string Minimum = "Minimum";
         private const string Iterations = "Iterations";
-        private readonly string FastestDescentInnerAlgorithm = Optimization.InnerAlgorithm;
+        private const string FastestDescentInnerAlgorithm = Optimization.InnerAlgorithm;
 
         private const string ContoursSuperGUIButton = "Contours";
         private const string ArrowsSuperGUIButton = "Arrows";
@@ -140,6 +141,8 @@ namespace MultiDimensionalOptimization.draw
 
             AddTextBox(XStart, 10, 300, false);
             AddTextBox(YStart, 10, 330, false);
+            
+            AddTextBox(Precision, 0.008, 380, true);
         }
 
         private const double InputChangePrecision = 0.00001;
@@ -385,6 +388,11 @@ namespace MultiDimensionalOptimization.draw
         {
             return GetParameter(Radius);
         }
+        
+        private double GetPrecision()
+        {
+            return GetParameter(Precision);
+        }
 
         private AlgorithmParameters GetAlgorithmParameters()
         {
@@ -417,12 +425,13 @@ namespace MultiDimensionalOptimization.draw
             CreateVectorsPoints(values, x, y, r);
         }
 
-        private void CreateContours(Function f, IList<double[]> values, List<Color> gradientColors)
+        private void CreateContours(Function f, IList<double[]> values, IReadOnlyList<Color> gradientColors)
         {
             _bitmap = new Bitmap(ScreenWidth, ScreenHeight);
-            var valuesMap = new SortedDictionary<double, Color>(GridPixelDoubleComparer);
-            
-            for (var i = values.Count - 1; i >= 0; i--)
+            var precision = GetPrecision() * Math.Pow(10, Math.Log10(maxY - minY) / 4);
+            var valuesMap = new SortedDictionary<double, Color>(new DoubleComparer(precision));
+
+            for (var i = 0; i < values.Count; i++)
             {
                 valuesMap[f.Apply(values[i])] = gradientColors[i];
             }
@@ -432,15 +441,19 @@ namespace MultiDimensionalOptimization.draw
         
         private class DoubleComparer : IComparer<double>
         {
-            private const double Precision = 0.02;
+            private readonly double _precision;
+
+            public DoubleComparer(double precision)
+            {
+                _precision = precision;
+            }
+
             public int Compare(double x, double y)
             {
                 var diff = x - y;
-                return IsNaN(diff) ? -1 : Math.Abs(diff) <= x * Precision ? 0 : Math.Sign(diff);
+                return IsNaN(diff) ? -1 : Math.Abs(diff) <= Math.Abs(x * _precision) ? 0 : Math.Sign(diff);
             }
         }
-        
-        private static readonly DoubleComparer GridPixelDoubleComparer = new();
 
         private void CreateVectorsPoints(ICollection<double[]> values, double x, double y, double r)
         {
