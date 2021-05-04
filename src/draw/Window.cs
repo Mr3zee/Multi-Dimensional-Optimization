@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
-using System.Linq;
 using MultiDimensionalOptimization.algo;
 using static System.Double;
 
@@ -13,6 +13,7 @@ namespace MultiDimensionalOptimization.draw
     using AlgorithmParameters = Dictionary<string, object>;
     using Grid = Dictionary<KeyValuePair<int, int>, double>;
     
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class Window
     {
         public const int ScreenWidth = 1280;
@@ -24,7 +25,8 @@ namespace MultiDimensionalOptimization.draw
         private Bitmap _bitmap;
         private List<int[]> _vectors;
         private readonly Pen _gridPen = new (Color.LightGray);
-        private readonly Pen _boldGridPen = new (Color.Gray, 1);
+        private readonly Brush _axesBrush = new SolidBrush(Color.Black);
+        private readonly Pen _boldGridPen = new (Color.Gray, 1) {EndCap = LineCap.ArrowAnchor};
         private double[][] _grid;
         private bool _updateGrid;
         private readonly Pen _vectorsPen = new (Color.Black, 1) {EndCap = LineCap.ArrowAnchor};
@@ -33,7 +35,13 @@ namespace MultiDimensionalOptimization.draw
         private readonly Dictionary<string, double> _parameters = new ();
         private readonly Dictionary<string, object> _algorithmParameters = new ();
         private readonly Dictionary<string, TextBox> _results = new ();
+        private readonly Dictionary<string, bool> _superGUIFlags = new ();
         private Algorithm _currentAlgorithm;
+
+        private double minX;
+        private double maxX;
+        private double minY;
+        private double maxY;
 
         private const string A11 = "a11";
         private const string A12 = "a12";
@@ -53,6 +61,11 @@ namespace MultiDimensionalOptimization.draw
         private const string Iterations = "Iterations";
         private readonly string FastestDescentInnerAlgorithm = Optimization.InnerAlgorithm;
 
+        private const string ContoursSuperGUIButton = "Contours";
+        private const string ArrowsSuperGUIButton = "Arrows";
+        private const string AxesSuperGUIButton = "Axes";
+        private const string AxesNamesSuperGUIButton = "Axes Names";
+
         public Window(Action refresh, Control.ControlCollection controls)
         {
             _updateGrid = true;
@@ -63,6 +76,7 @@ namespace MultiDimensionalOptimization.draw
             var innerAlgoGroup = CreateInnerAlgoGroup();
             CreateAlgoGroup(innerAlgoGroup);
             CreateResultsOutputs();
+            CreateSuperDuperGUI();
 
             Update();
         }
@@ -121,11 +135,11 @@ namespace MultiDimensionalOptimization.draw
 
             AddTextBox(C, 0, 190, true);
 
-            AddTextBox(Radius, 30, 250, true);
-            AddTextBox(Epsilon, 0.00001, 280, false);
+            AddTextBox(Radius, 30, 230, true);
+            AddTextBox(Epsilon, 0.00001, 260, false);
 
-            AddTextBox(XStart, 10, 340, false);
-            AddTextBox(YStart, 10, 370, false);
+            AddTextBox(XStart, 10, 300, false);
+            AddTextBox(YStart, 10, 330, false);
         }
 
         private const double InputChangePrecision = 0.00001;
@@ -273,6 +287,42 @@ namespace MultiDimensionalOptimization.draw
             };
             groupBox.Controls.Add(button);
         }
+        
+        private void CreateSuperDuperGUI()
+        {
+            var SuperGUIBox = new GroupBox
+            {
+                Text = "Super Duper GUI Buttons",
+                Top = 550,
+                Width = 160,
+                Height = 120,
+                BackColor = Color.White
+            };
+            SuperGUIBox.Left = ScreenWidth - SuperGUIBox.Width - 30;
+            AddSuperGUIElement(ContoursSuperGUIButton, true, SuperGUIBox, 15);
+            AddSuperGUIElement(ArrowsSuperGUIButton, true, SuperGUIBox, 40);
+            AddSuperGUIElement(AxesSuperGUIButton, true, SuperGUIBox, 65);
+            AddSuperGUIElement(AxesNamesSuperGUIButton, true, SuperGUIBox, 90);
+            _controls.Add(SuperGUIBox);
+        }
+
+        private void AddSuperGUIElement(string name, bool isChecked, GroupBox box, int offset)
+        {
+            var button = new CheckBox
+            {
+                Text = name,
+                Checked = isChecked,
+                Top = offset,
+                Left = 5
+            };
+            button.CheckedChanged += (_, _) =>
+            {
+                _superGUIFlags[name] = button.Checked;
+                Reload();
+            };
+            _superGUIFlags[name] = isChecked;
+            box.Controls.Add(button);
+        }
 
         private void Update()
         {
@@ -344,10 +394,10 @@ namespace MultiDimensionalOptimization.draw
         private void CreateFunctionContoursBitmap(Function f, IList<double[]> values, double x, double y, double r)
         {
             var gradientColors = GetColorsGradient(_maximalGradientColor, _minimalGradientColor, values.Count);
-            var minX = x - r; 
-            var maxX = x + r;
-            var minY = y - r * Ratio;
-            var maxY = y + r * Ratio;
+            minX = x - r; 
+            maxX = x + r;
+            minY = y - r * Ratio;
+            maxY = y + r * Ratio;
 
             if (_updateGrid)
             {
@@ -355,12 +405,19 @@ namespace MultiDimensionalOptimization.draw
                 _updateGrid = false;
             }
 
-            DrawContours(f, values, gradientColors);
+            if (_superGUIFlags[ContoursSuperGUIButton])
+            {
+                CreateContours(f, values, gradientColors);
+            }
+            else
+            {
+                _bitmap = new Bitmap(ScreenWidth, ScreenHeight);
+            }
 
-            DrawVectors(values, x, y, r, minX, minY);
+            CreateVectorsPoints(values, x, y, r);
         }
 
-        private void DrawContours(Function f, IList<double[]> values, List<Color> gradientColors)
+        private void CreateContours(Function f, IList<double[]> values, List<Color> gradientColors)
         {
             _bitmap = new Bitmap(ScreenWidth, ScreenHeight);
             var valuesMap = new SortedDictionary<double, Color>(GridPixelDoubleComparer);
@@ -385,7 +442,7 @@ namespace MultiDimensionalOptimization.draw
         
         private static readonly DoubleComparer GridPixelDoubleComparer = new();
 
-        private void DrawVectors(ICollection<double[]> values, double x, double y, double r, double minX, double minY)
+        private void CreateVectorsPoints(ICollection<double[]> values, double x, double y, double r)
         {
             _vectors = new List<int[]>();
             values.Add(new[] {x, y});
@@ -408,10 +465,12 @@ namespace MultiDimensionalOptimization.draw
             DrawGrid(e.Graphics, LinesCount);
             e.Graphics.DrawImage(_bitmap, 0, 0);
             DrawVectors(e.Graphics);
+            DrawAxesNames(e.Graphics);
         }
 
         private void DrawVectors(Graphics g)
         {
+            _vectorsPen.EndCap = _superGUIFlags[ArrowsSuperGUIButton] ? LineCap.ArrowAnchor : LineCap.NoAnchor;
             for (var i = 0; i < _vectors.Count - 1; i++)
             {
                 var x1 = _vectors[i][0];
@@ -440,9 +499,29 @@ namespace MultiDimensionalOptimization.draw
                 g.DrawLine(_gridPen, 0, centerY - i * delta, ScreenWidth, centerY - i * delta);
                 g.DrawLine(_gridPen, 0, centerY + i * delta, ScreenWidth, centerY + i * delta);
             }
+
+            var axesPen = _superGUIFlags[AxesSuperGUIButton] ? _boldGridPen : _gridPen;
+            g.DrawLine(axesPen, centerX, 0, centerX , ScreenHeight);
+            g.DrawLine(axesPen, 0, centerY, ScreenWidth, centerY);
+
+        }
+
+        private void DrawAxesNames(Graphics g)
+        {
+            const int centerX = ScreenWidth / 2;
+            const int centerY = ScreenHeight / 2;
             
-            g.DrawLine(_boldGridPen, centerX, 0, centerX , ScreenHeight);
-            g.DrawLine(_boldGridPen, 0, centerY, ScreenWidth, centerY);
+            if (!_superGUIFlags[AxesSuperGUIButton] || !_superGUIFlags[AxesNamesSuperGUIButton]) return;
+
+            var minXStr = minX.ToString(CultureInfo.InvariantCulture);
+            var XAxis = $"X Axes, {maxX.ToString(CultureInfo.InvariantCulture)}";
+            var minYStr = minY.ToString(CultureInfo.InvariantCulture);
+            var YAxis = $"Y Axes, {maxY.ToString(CultureInfo.InvariantCulture)}";
+            
+            g.DrawString(minXStr, SystemFonts.DialogFont, _axesBrush, centerX, 0);
+            g.DrawString(XAxis, SystemFonts.DialogFont, _axesBrush, centerX, ScreenHeight - 55);
+            g.DrawString(minYStr, SystemFonts.DialogFont, _axesBrush, 0, centerY);
+            g.DrawString(YAxis, SystemFonts.DialogFont, _axesBrush, ScreenWidth - YAxis.Length * 5 - 37, centerY);
         }
 
         private static void GenerateBitmap(IReadOnlyDictionary<double, Color> values, double[][] grid, Bitmap bitmap)
