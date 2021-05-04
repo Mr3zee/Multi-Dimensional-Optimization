@@ -4,13 +4,14 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
-using System.Reflection.Metadata;
+using System.Linq;
 using MultiDimensionalOptimization.algo;
 using static System.Double;
 
 namespace MultiDimensionalOptimization.draw
 {
     using AlgorithmParameters = Dictionary<string, object>;
+    using Grid = Dictionary<KeyValuePair<int, int>, double>;
     
     public class Window
     {
@@ -354,24 +355,49 @@ namespace MultiDimensionalOptimization.draw
                 _updateGrid = false;
             }
 
-            _bitmap = new Bitmap(ScreenWidth, ScreenHeight);
+            DrawContours(f, values, gradientColors);
 
-            for (var i = 0; i < values.Count; i++)
+            DrawVectors(values, x, y, r, minX, minY);
+        }
+
+        private void DrawContours(Function f, IList<double[]> values, List<Color> gradientColors)
+        {
+            _bitmap = new Bitmap(ScreenWidth, ScreenHeight);
+            var valuesMap = new SortedDictionary<double, Color>(GridPixelDoubleComparer);
+            
+            for (var i = values.Count - 1; i >= 0; i--)
             {
-                GenerateBitmap(f.Apply(values[i]), _grid, gradientColors[i], _bitmap);
+                valuesMap[f.Apply(values[i])] = gradientColors[i];
             }
-            
+
+            GenerateBitmap(valuesMap, _grid, _bitmap);
+        }
+        
+        private class DoubleComparer : IComparer<double>
+        {
+            private const double Precision = 0.02;
+            public int Compare(double x, double y)
+            {
+                var diff = x - y;
+                return IsNaN(diff) ? -1 : Math.Abs(diff) <= x * Precision ? 0 : Math.Sign(diff);
+            }
+        }
+        
+        private static readonly DoubleComparer GridPixelDoubleComparer = new();
+
+        private void DrawVectors(ICollection<double[]> values, double x, double y, double r, double minX, double minY)
+        {
             _vectors = new List<int[]>();
-            values.Add(new [] {x, y});
-            
+            values.Add(new[] {x, y});
+
             foreach (var value in values)
             {
                 var windowX = (value[0] - minX) / (2 * r) * ScreenWidth;
                 var windowY = (value[1] - minY) / (2 * r * Ratio) * ScreenHeight;
-                
+
                 if (!InWindow(windowX) || !InWindow(windowY)) continue;
-                
-                _vectors.Add(new [] { (int) windowX, (int) windowY });
+
+                _vectors.Add(new[] {(int) windowX, (int) windowY});
             }
         }
 
@@ -419,18 +445,16 @@ namespace MultiDimensionalOptimization.draw
             g.DrawLine(_boldGridPen, 0, centerY, ScreenWidth, centerY);
         }
 
-        private const double Precision = 0.02;
-
-        private static void GenerateBitmap(double value, IReadOnlyList<double[]> grid, Color color, Bitmap bitmap)
+        private static void GenerateBitmap(IReadOnlyDictionary<double, Color> values, double[][] grid, Bitmap bitmap)
         {
-            var epsilon = value * Precision;
-            for (var i = 0; i < ScreenWidth; i++)
+            for (var i = 0; i < grid.Length; i++)
             {
-                for (var j = 0; j < ScreenHeight; j++)
+                for (var j = 0; j < grid[i].Length; j++)
                 {
-                    if (Math.Abs(grid[i][j] - value) > epsilon) continue;
+                    var v = grid[i][j];
+                    if (!values.ContainsKey(v)) continue;
                     
-                    bitmap.SetPixel(i, j, color);
+                    bitmap.SetPixel(i, j, values[v]);
                 }
             }
         }
