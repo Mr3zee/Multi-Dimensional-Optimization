@@ -30,8 +30,8 @@ namespace MultiDimensionalOptimization.draw
         private double[][] _grid;
         private bool _updateGrid;
         private readonly Pen _vectorsPen = new (Color.Black, 1) {EndCap = LineCap.ArrowAnchor};
-        private readonly Color _minimalGradientColor = Color.Aqua;
-        private readonly Color _maximalGradientColor = Color.Coral;
+        private readonly Color _minimalGradientColor = Color.Coral;
+        private readonly Color _maximalGradientColor = Color.Green;
         private readonly Dictionary<string, double> _parameters = new ();
         private readonly Dictionary<string, object> _algorithmParameters = new ();
         private readonly Dictionary<string, TextBox> _results = new ();
@@ -566,14 +566,14 @@ namespace MultiDimensionalOptimization.draw
 
         private static List<Color> GetColorsGradient(Color color1, Color color2, int size)
         {
-            int rMax = color1.R;
-            int rMin = color2.R;
+            int rMin = color1.R;
+            int rMax = color2.R;
             int gMin = color1.G;
-            int gMax = color1.G;
+            int gMax = color2.G;
             int bMin = color1.B;
-            int bMax = color1.B;
+            int bMax = color2.B;
             var colorList = new List<Color>();
-            for (int i = 0; i < size; i++)
+            for (var i = 0; i < size; i++)
             {
                 var rAverage = rMin + (rMax - rMin) * i / size;
                 var gAverage = gMin + (gMax - gMin) * i / size;
