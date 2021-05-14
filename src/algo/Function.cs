@@ -44,7 +44,7 @@ namespace MultiDimensionalOptimization.algo
 
         public double GetMaxEigenValue()
         {
-            return _a.GetMaxEigenValue();
+            return A.GetMaxEigenValue();
         }
     }
 }

@@ -20,9 +20,9 @@ namespace MultiDimensionalOptimization
         {
             AttachConsole(AttachParentProcess);
 
-            // const int n = 2;
-            // var function = AdvancedMath.CreateDiagonalFunction(n, 3000);
-            // var result = Optimization.FASTEST_DESCENT.Invoke(function, Enumerable.Repeat(10.0, n).ToArray(), 0.0001);
+            // const int n = 10000;
+            // var function = AdvancedMath.CreateDiagonalFunction(n, 1218);
+            // var result = Optimization.GRADIENT_DESCENT.Invoke(function, Enumerable.Repeat(10.0, n).ToArray(), 0.0001);
             // Console.WriteLine(result.Y);
             // return;
             
