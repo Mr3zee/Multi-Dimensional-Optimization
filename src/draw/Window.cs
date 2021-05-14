@@ -357,7 +357,7 @@ namespace MultiDimensionalOptimization.draw
 
         private Function GetFunction()
         {
-            return new(2, new []
+            return new(typeof(LibMatrix), 2, new []
             {
                 GetParameter(A11), GetParameter(A12),
                 GetParameter(A21), GetParameter(A22)

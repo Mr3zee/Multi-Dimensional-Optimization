@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using MathNet.Numerics.LinearAlgebra;
 
 namespace MultiDimensionalOptimization.algo
 {
@@ -39,7 +38,7 @@ namespace MultiDimensionalOptimization.algo
         private const double MAX_ITR = 10000;
         public const string InnerAlgorithm = "Inner Algorithm";
 
-        private delegate Matrix<double> InnerAlgo(Function f, Matrix<double> x, double epsilon,
+        private delegate ISuperDuperMatrix InnerAlgo(Function f, ISuperDuperMatrix x, double epsilon,
             AlgorithmParameters parameters, Result result);
 
         private static Algorithm UnwrapAlgorithm(InnerAlgo algo)
@@ -48,7 +47,7 @@ namespace MultiDimensionalOptimization.algo
             {
                 var n = xArray.Length;
                 var result = new Result();
-                var x = algo.Invoke(f, AdvancedMath.ToVector(n, xArray), epsilon, parameters, result);
+                var x = algo.Invoke(f, AdvancedMath.ToVector(f.Type, n, xArray), epsilon, parameters, result);
                 if (NeedToLog)
                 {
                     Console.WriteLine();
@@ -67,7 +66,7 @@ namespace MultiDimensionalOptimization.algo
             var alpha = 2 / GetMaxEigenValue(f);
 
             var fx = f.Apply(x);
-            Matrix<double> grad;
+            ISuperDuperMatrix grad;
             while (AdvancedMath.Norm(AdvancedMath.ToArray(grad = f.Gradient(x))) > epsilon && itr < MAX_ITR)
             {
                 result.AddLevel(AdvancedMath.ToArray(x));
@@ -96,7 +95,7 @@ namespace MultiDimensionalOptimization.algo
             var itr = 0;
             var maxEigenValue = GetMaxEigenValue(f);
 
-            Matrix<double> grad;
+            ISuperDuperMatrix grad;
             var oneDAlgo = parameters is not null
                 ? (InnerOptimizationAlgorithm) parameters[InnerAlgorithm]
                 : OneDimensionalOptimization.GOLDEN_SECTION;

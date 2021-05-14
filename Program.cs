@@ -4,11 +4,11 @@ using System.Windows.Forms;
 
 namespace MultiDimensionalOptimization
 {
-    static class Program
+    internal static class Program
     {
         [DllImport( "kernel32.dll" )]
-        static extern bool AttachConsole( int dwProcessId );
-        private const int ATTACH_PARENT_PROCESS = -1;
+        private static extern bool AttachConsole( int dwProcessId );
+        private const int AttachParentProcess = -1;
         
         /// <summary>
         ///  The main entry point for the application.
@@ -16,7 +16,7 @@ namespace MultiDimensionalOptimization
         [STAThread]
         static void Main()
         {
-            AttachConsole(ATTACH_PARENT_PROCESS);
+            AttachConsole(AttachParentProcess);
             
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();

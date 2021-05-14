@@ -1,26 +1,28 @@
-﻿using MathNet.Numerics.LinearAlgebra;
+﻿using System;
+using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace MultiDimensionalOptimization.algo
 {
     public class Function
     {
-        private readonly int _n;
-        public int N => _n;
-        
-        private readonly Matrix<double> _a;
-        public Matrix<double> A { get; }
+        public int N { get; }
 
-        private readonly Matrix<double> _b;
+        private readonly ISuperDuperMatrix _a;
+        public ISuperDuperMatrix A { get; }
+
+        private readonly ISuperDuperMatrix _b;
         private readonly double _c;
+        public Type Type { get; }
 
-        public Function(int n, double[] a, double[] b, double c)
+        public Function(Type type, int n, double[] a, double[] b, double c)
         {
             // TODO check dimensions 
-            _n = n;
-            _a = AdvancedMath.ToMatrix(n, a);
-            A = ComputeA(n, _a);
-            _b = AdvancedMath.ToVector(n, b);
+            Type = type;
+            N = n;
+            _a = AdvancedMath.ToMatrix(type, n, a);
+            A = ComputeA();
+            _b = AdvancedMath.ToVector(type, n, b);
             _c = c;
         }
 
@@ -31,42 +33,32 @@ namespace MultiDimensionalOptimization.algo
 
         public double Apply(double[] x)
         {
-            return Apply(AdvancedMath.ToVector(_n, x));
+            return Apply(AdvancedMath.ToVector(Type, N, x));
         }
         
-        public double Apply(Matrix<double> x)
+        public double Apply(ISuperDuperMatrix x)
         {
-            return 0.5 * x.Transpose().Multiply(_a).Multiply(x)[0, 0] -
-                _b.Transpose().Multiply(x)[0, 0] + _c;
+            return 0.5 * x.Transpose().Multiply(_a).Multiply(x).Get(0, 0) -
+                _b.Transpose().Multiply(x).Get(0, 0) + _c;
         }
 
-        public Matrix<double> Gradient(Matrix<double> x)
+        public ISuperDuperMatrix Gradient(ISuperDuperMatrix x)
         {
             return A.Multiply(x).Subtract(_b);
         }
         
-        public Matrix<double> Gradient(double[] x)
+        private ISuperDuperMatrix ComputeA()
         {
-            return Gradient(AdvancedMath.ToVector(_n, x));
-        }
-        
-        public double[] GradientArray(double[] x)
-        {
-            return Gradient(x).ToColumnArrays()[0];
-        }
-
-        private static Matrix ComputeA(int n, Matrix<double> a)
-        {
-            var vA = new double[n * n];
-            for (int i = 0; i < n; i++)
+            var vA = new double[N * N];
+            for (var i = 0; i < N; i++)
             {
-                for (int j = 0; j < n; j++)
+                for (var j = 0; j < N; j++)
                 {
-                    vA[i * n + j] = 0.5 * (a[i, j] + a[j, i]);
+                    vA[i * N + j] = 0.5 * (_a.Get(i, j) + _a.Get(j, i));
                 }
             }
 
-            return new DenseMatrix(n, n, vA);
+            return ISuperDuperMatrix.Create(Type, N, N, vA);
         }
     }
 }

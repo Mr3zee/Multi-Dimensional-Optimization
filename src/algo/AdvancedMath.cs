@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Linq;
-using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace MultiDimensionalOptimization.algo
 {
     public static class AdvancedMath
     {
-        private static readonly Random Random = new(); 
+        private static readonly Random Random = new();
         public static double Norm(double[] v)
         {
             return Math.Sqrt(Enumerable.Range(0, v.Length).Aggregate(0.0d, 
@@ -15,22 +14,22 @@ namespace MultiDimensionalOptimization.algo
             );
         }
         
-        public static Matrix<double> ToVector(int n, double[] v)
+        public static ISuperDuperMatrix ToVector(Type type, int n, double[] v)
         {
-            return new DenseMatrix(n, 1, v);
+            return ISuperDuperMatrix.Create(type, n, 1, v);
         }
 
-        public static Matrix<double> ToMatrix(int n, double[] m)
+        public static ISuperDuperMatrix ToMatrix(Type type, int n, double[] m)
         {
-            return new DenseMatrix(n, n, m);
+            return ISuperDuperMatrix.Create(type, n, n, m);
         }
         
-        public static double[] ToArray(Matrix<double> v)
+        public static double[] ToArray(ISuperDuperMatrix v)
         {
-            return v.ToColumnArrays()[0];
+            return v.ToVector();
         }
 
-        public static double Scalar(Matrix<double> a, Matrix<double> b)
+        public static double Scalar(ISuperDuperMatrix a, ISuperDuperMatrix b)
         {
             return ToArray(a).Zip(ToArray(b), (i, j) => i * j).Sum();
         }
@@ -49,7 +48,7 @@ namespace MultiDimensionalOptimization.algo
 
         public static Function CreateDiagonalFunction(int n, int k)
         {
-            return new Function(n, GetDiagonalMatrix(n, k), Enumerable.Repeat(0.0, n).ToArray(), 0);
+            return new Function(typeof(DiagonalMatrix), n, GetDiagonalMatrix(n, k), Enumerable.Repeat(0.0, n).ToArray(), 0);
         }
 
         private const double UpperRandomBound = 10;
