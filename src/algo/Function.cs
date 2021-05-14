@@ -21,19 +21,14 @@ namespace MultiDimensionalOptimization.algo
             Type = type;
             N = n;
             _a = AdvancedMath.ToMatrix(type, n, a);
-            A = ComputeA();
-            _b = AdvancedMath.ToVector(type, n, b);
+            A = _a.ComputeA();
+            _b = AdvancedMath.ToVector(n, b);
             _c = c;
-        }
-
-        public double[,] GetMatrix()
-        {
-            return A.ToArray();
         }
 
         public double Apply(double[] x)
         {
-            return Apply(AdvancedMath.ToVector(Type, N, x));
+            return Apply(AdvancedMath.ToVector(N, x));
         }
         
         public double Apply(ISuperDuperMatrix x)
@@ -46,19 +41,10 @@ namespace MultiDimensionalOptimization.algo
         {
             return A.Multiply(x).Subtract(_b);
         }
-        
-        private ISuperDuperMatrix ComputeA()
-        {
-            var vA = new double[N * N];
-            for (var i = 0; i < N; i++)
-            {
-                for (var j = 0; j < N; j++)
-                {
-                    vA[i * N + j] = 0.5 * (_a.Get(i, j) + _a.Get(j, i));
-                }
-            }
 
-            return ISuperDuperMatrix.Create(Type, N, N, vA);
+        public double GetMaxEigenValue()
+        {
+            return _a.GetMaxEigenValue();
         }
     }
 }

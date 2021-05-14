@@ -1,45 +1,96 @@
-﻿namespace MultiDimensionalOptimization.algo
+﻿using System;
+using System.Linq;
+using MathNet.Numerics.LinearAlgebra;
+
+namespace MultiDimensionalOptimization.algo
 {
     public class DiagonalMatrix : ISuperDuperMatrix
     {
-        public double[,] ToArray()
+        private readonly double[] _diagonal;
+
+        public DiagonalMatrix(double[] diagonal)
         {
-            throw new System.NotImplementedException();
+            _diagonal = diagonal;
         }
 
         public double[] ToVector()
         {
-            throw new System.NotImplementedException();
+            return _diagonal;
         }
 
         public ISuperDuperMatrix Transpose()
         {
-            throw new System.NotImplementedException();
+            return this;
         }
 
         public ISuperDuperMatrix Multiply(ISuperDuperMatrix other)
         {
-            throw new System.NotImplementedException();
+            var isVector = other is Vector;
+            var multiplied = isVector ? ((Vector) other).ToVector() : Cast(other)._diagonal;
+            for (var i = 0; i < _diagonal.Length; i++)
+            {
+                multiplied[i] *= _diagonal[i];
+            }
+            return isVector ? new Vector(multiplied) : new DiagonalMatrix(multiplied);
         }
 
         public ISuperDuperMatrix Multiply(double a)
         {
-            throw new System.NotImplementedException();
+            var multiplied = _diagonal;
+            for (var i = 0; i < _diagonal.Length; i++)
+            {
+                multiplied[i] *= a;
+            }
+            return new DiagonalMatrix(multiplied);
         }
 
         public ISuperDuperMatrix Subtract(ISuperDuperMatrix other)
         {
-            throw new System.NotImplementedException();
+            var subtracted = Cast(other)._diagonal;
+            for (var i = 0; i < _diagonal.Length; i++)
+            {
+                subtracted[i] = _diagonal[i] - subtracted[i];
+            }
+            return new DiagonalMatrix(subtracted);
         }
 
         public ISuperDuperMatrix Add(ISuperDuperMatrix other)
         {
-            throw new System.NotImplementedException();
+            var added = Cast(other)._diagonal;
+            for (var i = 0; i < _diagonal.Length; i++)
+            {
+                added[i] += _diagonal[i];
+            }
+            return new DiagonalMatrix(added);
         }
 
         public double Get(int i, int j)
         {
-            throw new System.NotImplementedException();
+            return i == j ? _diagonal[i] : 0;
+        }
+
+        public double GetMaxEigenValue()
+        {
+            return _diagonal.Max();
+        }
+
+        public ISuperDuperMatrix ComputeA()
+        {
+            return new DiagonalMatrix(_diagonal);
+        }
+
+        private static DiagonalMatrix Cast(ISuperDuperMatrix other)
+        {
+            if (other is LibMatrix libMatrix)
+            {
+                return new DiagonalMatrix(libMatrix.ToVector());
+            }
+            if (other is not DiagonalMatrix diagonalMatrix)
+            {
+                throw new NotSupportedException("Other should be Diagonal too");
+            }
+
+            return diagonalMatrix;
         }
     }
 }

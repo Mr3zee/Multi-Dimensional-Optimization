@@ -14,9 +14,9 @@ namespace MultiDimensionalOptimization.algo
             );
         }
         
-        public static ISuperDuperMatrix ToVector(Type type, int n, double[] v)
+        public static ISuperDuperMatrix ToVector(int n, double[] v)
         {
-            return ISuperDuperMatrix.Create(type, n, 1, v);
+            return ISuperDuperMatrix.Create(ISuperDuperMatrix.VECTOR, n, 1, v);
         }
 
         public static ISuperDuperMatrix ToMatrix(Type type, int n, double[] m)
@@ -34,21 +34,21 @@ namespace MultiDimensionalOptimization.algo
             return ToArray(a).Zip(ToArray(b), (i, j) => i * j).Sum();
         }
 
-        public static double[] GetDiagonalMatrix(int n, int k)
+        private static double[] GetDiagonalMatrix(int n, int k)
         {
-            var m = Enumerable.Repeat(0.0, n * n).ToArray();
+            var m = new double[n];
             for (var i = 0; i < n; i++)
             {
-                m[i * (n + 1)] = Random.Next(1, k);
+                m[i] = Random.Next(1, k);
             }
             m[0] = 1;
-            m[n * n - 1] = k;
+            m[n - 1] = k;
             return m;
         }
 
         public static Function CreateDiagonalFunction(int n, int k)
         {
-            return new Function(typeof(DiagonalMatrix), n, GetDiagonalMatrix(n, k), Enumerable.Repeat(0.0, n).ToArray(), 0);
+            return new Function(ISuperDuperMatrix.DIAGONAL_MATRIX, n, GetDiagonalMatrix(n, k), Enumerable.Repeat(0.0, n).ToArray(), 0);
         }
 
         private const double UpperRandomBound = 10;

@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using MultiDimensionalOptimization.algo;
 
 namespace MultiDimensionalOptimization
 {
@@ -17,6 +19,12 @@ namespace MultiDimensionalOptimization
         static void Main()
         {
             AttachConsole(AttachParentProcess);
+
+            // const int n = 2;
+            // var function = AdvancedMath.CreateDiagonalFunction(n, 3000);
+            // var result = Optimization.FASTEST_DESCENT.Invoke(function, Enumerable.Repeat(10.0, n).ToArray(), 0.0001);
+            // Console.WriteLine(result.Y);
+            // return;
             
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();

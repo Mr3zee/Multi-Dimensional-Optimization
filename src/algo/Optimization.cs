@@ -47,7 +47,7 @@ namespace MultiDimensionalOptimization.algo
             {
                 var n = xArray.Length;
                 var result = new Result();
-                var x = algo.Invoke(f, AdvancedMath.ToVector(f.Type, n, xArray), epsilon, parameters, result);
+                var x = algo.Invoke(f, AdvancedMath.ToVector(n, xArray), epsilon, parameters, result);
                 if (NeedToLog)
                 {
                     Console.WriteLine();
@@ -63,7 +63,7 @@ namespace MultiDimensionalOptimization.algo
         {
             var itr = 0;
 
-            var alpha = 2 / GetMaxEigenValue(f);
+            var alpha = 2 / f.GetMaxEigenValue();
 
             var fx = f.Apply(x);
             ISuperDuperMatrix grad;
@@ -93,7 +93,7 @@ namespace MultiDimensionalOptimization.algo
         public static readonly Algorithm FASTEST_DESCENT = UnwrapAlgorithm((f, x, epsilon, parameters, result) =>
         {
             var itr = 0;
-            var maxEigenValue = GetMaxEigenValue(f);
+            var maxEigenValue = f.GetMaxEigenValue();
 
             ISuperDuperMatrix grad;
             var oneDAlgo = parameters is not null
@@ -151,15 +151,9 @@ namespace MultiDimensionalOptimization.algo
             return x;
         });
 
-        private static double GetMaxEigenValue(Function f)
-        {
-            alglib.smatrixevd(f.GetMatrix(), f.N, 0, true, out var eigenValues, out _);
-            return eigenValues.Max();
-        }
-
         private static int _lastSize = 0;
 
-        private const bool NeedToLog = false;
+        private const bool NeedToLog = true;
 
         private static void LogItr(int itr)
         {
