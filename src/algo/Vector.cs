@@ -30,11 +30,6 @@ namespace MultiDimensionalOptimization.algo
 
         public ISuperDuperMatrix Multiply(ISuperDuperMatrix other)
         {
-            if (other is LibMatrix libMatrix)
-            {
-                return new LibMatrix(MatrixVector.Multiply(libMatrix.Matrix));
-            }
-
             throw new NotSupportedException("Cannot multiply");
         }
 

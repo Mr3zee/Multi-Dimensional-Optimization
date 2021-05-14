@@ -20,7 +20,7 @@ namespace MultiDimensionalOptimization.algo
 
         public ISuperDuperMatrix Transpose()
         {
-            return this;
+            return new DiagonalMatrix(_diagonal);
         }
 
         public ISuperDuperMatrix Multiply(ISuperDuperMatrix other)
@@ -81,10 +81,6 @@ namespace MultiDimensionalOptimization.algo
 
         private static DiagonalMatrix Cast(ISuperDuperMatrix other)
         {
-            if (other is LibMatrix libMatrix)
-            {
-                return new DiagonalMatrix(libMatrix.ToVector());
-            }
             if (other is not DiagonalMatrix diagonalMatrix)
             {
                 throw new NotSupportedException("Other should be Diagonal too");
