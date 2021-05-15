@@ -1,4 +1,6 @@
-﻿namespace MultiDimensionalOptimization
+﻿using System.Drawing;
+
+namespace MultiDimensionalOptimization
 {
     partial class ContourForm
     {
@@ -33,6 +35,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Text = "MultiDimensional Optimization";
+            this.Icon = new Icon("C:\\Users\\809542\\Desktop\\Repos\\MultiDimensionalOptimization\\src\\resources\\icon.ico");
         }
 
         #endregion
